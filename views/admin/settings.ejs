@@ -1,0 +1,174 @@
+<%- include('../partials/admin-header') %>
+  <style>
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 720px) {
+      .settings-grid { grid-template-columns: 1fr; }
+    }
+
+    .settings-card {
+      background: #fff; border: 1.5px solid var(--border); border-radius: 18px; overflow: hidden;
+    }
+    .settings-card-head {
+      padding: 18px 24px 14px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .settings-card-head-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--violet-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .settings-card-head-icon svg { width: 17px; height: 17px; color: var(--violet); }
+    .settings-card-head h2 { font-size: 0.98rem; margin: 0 0 1px; }
+    .settings-card-head p  { font-size: 0.78rem; color: var(--muted); margin: 0; }
+    .settings-card-body { padding: 20px 24px; }
+
+    /* Toggle switch */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border-light);
+    }
+    .toggle-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .toggle-label strong { display: block; font-size: 0.9rem; color: var(--text); margin-bottom: 2px; }
+    .toggle-label span   { font-size: 0.8rem; color: var(--muted); }
+    .toggle-switch-wrap { flex-shrink: 0; }
+    .toggle-switch {
+      position: relative; display: inline-block; width: 48px; height: 26px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #d1d5db; border-radius: 26px;
+      transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      height: 20px; width: 20px; left: 3px; bottom: 3px;
+      background: #fff; border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      transition: transform 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: #0057d8; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+
+    .review-status-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      border-radius: 20px; font-size: 0.78rem; font-weight: 700;
+      padding: 4px 12px; margin-top: 14px;
+    }
+    .review-on  { background: #d1fae5; color: #065f46; }
+    .review-off { background: #fee2e2; color: #991b1b; }
+    .review-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .review-on  .review-dot { background: #10b981; }
+    .review-off .review-dot { background: #ef4444; }
+  </style>
+
+  <h1>Site settings</h1>
+  <p class="subtitle">Manage global site configuration.</p>
+
+  <% if (error)   { %><div class="alert error"   style="margin-bottom:20px;"><%= error %></div><% } %>
+  <% if (success) { %><div class="alert success" style="margin-bottom:20px;"><%= success %></div><% } %>
+
+  <div class="settings-grid">
+
+    <!-- Logo -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div class="settings-card-head-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div>
+          <h2>Site logo</h2>
+          <p>Displayed in the header on every page.</p>
+        </div>
+      </div>
+      <div class="settings-card-body">
+        <% if (logoExists) { %>
+          <div style="margin-bottom:18px;">
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;font-weight:500;">Current logo</p>
+            <img src="/images/logo.png?t=<%= Date.now() %>" alt="Site logo"
+              style="max-height:64px;max-width:220px;border:1.5px solid var(--border);border-radius:10px;padding:8px;background:#fff;display:block;">
+          </div>
+          <form method="POST" action="/admin/settings/logo/delete" style="margin-bottom:20px;">
+            <button class="btn danger small" type="submit"
+              onclick="return confirm('Remove the current logo?')">Remove logo</button>
+          </form>
+        <% } %>
+        <form method="POST" action="/admin/settings/logo" enctype="multipart/form-data">
+          <div class="field">
+            <label for="logo"><%= logoExists ? 'Replace logo' : 'Upload logo' %></label>
+            <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" required
+              style="padding:8px 12px;">
+            <p class="help">PNG, JPG, WebP or SVG &mdash; max 2 MB.</p>
+          </div>
+          <button class="btn" type="submit">Save logo</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Blog settings -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div class="settings-card-head-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div>
+          <h2>Blog</h2>
+          <p>Pagination and display settings for the blog page.</p>
+        </div>
+      </div>
+      <div class="settings-card-body">
+        <form method="POST" action="/admin/settings/general">
+          <div class="field">
+            <label for="blog_per_page">Posts per page</label>
+            <input type="number" id="blog_per_page" name="blog_per_page"
+              value="<%= blogPerPage %>" min="1" max="100" required
+              style="max-width:100px;">
+            <p class="help">Number of blog posts shown per page (1–100).</p>
+          </div>
+          <button class="btn" type="submit">Save</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Site icon / favicon -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div class="settings-card-head-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+        </div>
+        <div>
+          <h2>Site icon</h2>
+          <p>Shown in browser tabs and bookmarks (favicon).</p>
+        </div>
+      </div>
+      <div class="settings-card-body">
+        <% if (faviconExists) { %>
+          <div style="margin-bottom:18px;">
+            <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;font-weight:500;">Current site icon</p>
+            <img src="<%= faviconUrl %>?t=<%= Date.now() %>" alt="Site icon"
+              style="height:48px;width:48px;border:1.5px solid var(--border);border-radius:10px;padding:6px;background:#fff;display:block;object-fit:contain;">
+          </div>
+          <form method="POST" action="/admin/settings/favicon/delete" style="margin-bottom:20px;">
+            <button class="btn danger small" type="submit"
+              onclick="return confirm('Remove the current site icon?')">Remove site icon</button>
+          </form>
+        <% } %>
+        <form method="POST" action="/admin/settings/favicon" enctype="multipart/form-data">
+          <div class="field">
+            <label for="favicon"><%= faviconExists ? 'Replace site icon' : 'Upload site icon' %></label>
+            <input type="file" id="favicon" name="favicon" accept="image/png,image/x-icon" required
+              style="padding:8px 12px;">
+            <p class="help">PNG or ICO &mdash; square, ideally 512&times;512px &mdash; max 1 MB.</p>
+          </div>
+          <button class="btn" type="submit">Save site icon</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+<%- include('../partials/admin-footer') %>

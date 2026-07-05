@@ -1,0 +1,47 @@
+<%- include('../partials/employer-header') %>
+  <h1>Edit job posting</h1>
+  <p class="subtitle">Saving changes will resubmit the listing for admin review.</p>
+
+  <% if (error) { %><div class="alert error"><%= error %></div><% } %>
+
+  <form class="stacked" id="edit-job-form" method="POST" action="/employer/jobs/<%= job.id %>/edit">
+    <div class="field">
+      <label for="title">Job title</label>
+      <input type="text" id="title" name="title" value="<%= job.title %>" required>
+    </div>
+    <div class="field">
+      <label for="company">Company name</label>
+      <input type="text" id="company" name="company" value="<%= job.company %>" required>
+    </div>
+    <div class="field">
+      <label for="location">Location</label>
+      <input type="text" id="location" name="location" value="<%= job.location %>" placeholder="e.g. Toronto, ON or Remote" required>
+    </div>
+    <div class="field">
+      <label for="job_type">Job type</label>
+      <select id="job_type" name="job_type">
+        <option value="Full-time"  <%= job.job_type === 'Full-time'  ? 'selected' : '' %>>Full-time</option>
+        <option value="Part-time"  <%= job.job_type === 'Part-time'  ? 'selected' : '' %>>Part-time</option>
+        <option value="Contract"   <%= job.job_type === 'Contract'   ? 'selected' : '' %>>Contract</option>
+        <option value="Internship" <%= job.job_type === 'Internship' ? 'selected' : '' %>>Internship</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="salary">Salary (optional)</label>
+      <input type="text" id="salary" name="salary" value="<%= job.salary || '' %>" placeholder="e.g. $70,000 - $90,000/year">
+    </div>
+    <div class="field">
+      <label>Job description</label>
+      <%- include('../partials/quill-editor', {
+        fieldName:   'description',
+        formId:      'edit-job-form',
+        initialHtml: job.description || '',
+        minHeight:   '300px'
+      }) %>
+    </div>
+    <div class="actions">
+      <button class="btn" type="submit">Save changes</button>
+      <a class="btn outline" href="/employer/dashboard">Cancel</a>
+    </div>
+  </form>
+<%- include('../partials/employer-footer') %>

@@ -1,0 +1,272 @@
+<%- include('../partials/admin-header') %>
+<style>
+  .up-back { display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:0.85rem; font-weight:600; text-decoration:none; margin-bottom:20px; }
+  .up-back:hover { color:var(--violet-dark); }
+  .up-back svg { width:14px; height:14px; }
+
+  /* Header card */
+  .up-header {
+    background:#fff; border:1px solid var(--border); border-radius:16px;
+    padding:28px; display:flex; align-items:flex-start; gap:24px;
+    box-shadow:0 2px 12px rgba(108,92,231,0.06); margin-bottom:20px; flex-wrap:wrap;
+  }
+  .up-avatar-lg {
+    width:88px; height:88px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(135deg,var(--violet) 0%,var(--violet-deeper) 100%);
+    display:flex; align-items:center; justify-content:center;
+    font-size:2rem; font-weight:800; color:#fff; letter-spacing:-1px;
+    overflow:hidden; border:3px solid var(--violet-light);
+  }
+  .up-avatar-lg img { width:100%; height:100%; object-fit:cover; display:block; }
+  .up-header-info { flex:1; min-width:0; }
+  .up-name { font-size:1.35rem; font-weight:800; margin-bottom:4px; }
+  .up-email { font-size:0.88rem; color:var(--muted); margin-bottom:10px; }
+  .up-meta-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .up-joined { font-size:0.8rem; color:var(--muted); margin-top:6px; }
+
+  /* Stats strip */
+  .up-stats {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; margin-bottom:20px;
+  }
+  .up-stat {
+    background:#fff; border:1px solid var(--border); border-radius:12px;
+    padding:16px 18px; box-shadow:0 2px 8px rgba(108,92,231,0.05);
+  }
+  .up-stat-value { font-size:1.6rem; font-weight:800; color:var(--violet-dark); line-height:1; margin-bottom:4px; }
+  .up-stat-label { font-size:0.76rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+
+  /* Sections */
+  .up-section { background:#fff; border:1px solid var(--border); border-radius:16px; overflow:hidden; margin-bottom:20px; box-shadow:0 2px 12px rgba(108,92,231,0.06); }
+  .up-section-head { display:flex; align-items:center; gap:10px; padding:14px 22px; border-bottom:1px solid var(--border-light); background:linear-gradient(90deg,var(--violet-bg) 0%,#fff 100%); }
+  .up-section-head::before { content:''; display:inline-block; width:4px; height:18px; background:var(--violet); border-radius:4px; flex-shrink:0; }
+  .up-section-head h2 { margin:0; font-size:0.93rem; font-weight:700; color:var(--violet-dark); }
+  .up-section-body { padding:20px 22px; }
+
+  /* Info grid */
+  .up-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 28px; }
+  @media(max-width:560px){ .up-info-grid { grid-template-columns:1fr; } }
+  .up-info-item label { display:block; font-size:0.73rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px; }
+  .up-info-item span { font-size:0.9rem; font-weight:500; }
+
+  /* Action buttons in header */
+  .up-actions { display:flex; flex-direction:column; gap:8px; flex-shrink:0; }
+  .up-actions .btn { min-width:120px; text-align:center; }
+
+  /* Job/Application rows */
+  .up-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 0; border-bottom:1px solid var(--border-light); flex-wrap:wrap; }
+  .up-row:last-child { border-bottom:none; }
+  .up-row-title { font-weight:600; font-size:0.9rem; margin-bottom:2px; }
+  .up-row-meta { font-size:0.79rem; color:var(--muted); }
+
+  /* Danger zone */
+  .danger-zone { border-color:#fca5a5; }
+  .danger-zone .up-section-head { background:#fff5f5; }
+  .danger-zone .up-section-head::before { background:#ef4444; }
+  .danger-zone .up-section-head h2 { color:#991b1b; }
+  .danger-zone .up-section-body { padding:18px 22px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .danger-zone-text p { margin:0 0 4px; font-size:0.88rem; font-weight:600; }
+  .danger-zone-text span { font-size:0.8rem; color:var(--muted); }
+</style>
+
+<%
+  var u = profileUser;
+  var initials = (u.name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  var roleLabel = u.role === 'seeker' ? 'Job seeker' : u.role === 'employer' ? 'Employer' : u.role;
+  var joinedDate = new Date(u.created_at).toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'});
+%>
+
+<a class="up-back" href="/admin/users">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  Back to users
+</a>
+
+<% if (success) { %>
+  <div class="alert success" style="margin-bottom:16px;"><%= success %></div>
+<% } %>
+
+<!-- ── Header card ─────────────────────────────────── -->
+<div class="up-header">
+  <div class="up-avatar-lg">
+    <% if (u.avatar) { %>
+      <img src="/uploads/avatars/<%= u.avatar %>" alt="<%= u.name %>">
+    <% } else { %><%= initials %><% } %>
+  </div>
+
+  <div class="up-header-info">
+    <div class="up-name"><%= u.name %></div>
+    <div class="up-email"><%= u.email %></div>
+    <div class="up-meta-row">
+      <span class="badge" style="background:var(--violet-bg);color:var(--violet-dark);border:1px solid var(--violet-light);text-transform:capitalize;"><%= roleLabel %></span>
+      <span class="badge <%= u.status %>"><%= u.status %></span>
+      <% if (u.role === 'employer' && u.company_name) { %>
+        <span style="font-size:0.82rem;color:var(--muted);">🏢 <%= u.company_name %></span>
+      <% } %>
+    </div>
+    <div class="up-joined">Member since <%= joinedDate %></div>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="up-actions">
+    <form method="POST" action="/admin/users/<%= u.id %>/status">
+      <input type="hidden" name="status" value="<%= u.status === 'active' ? 'blocked' : 'active' %>">
+      <input type="hidden" name="_redirect" value="/admin/users/<%= u.id %>?success=1&msg=<%= u.status === 'active' ? 'User+blocked.' : 'User+unblocked.' %>">
+      <button class="btn <%= u.status === 'active' ? 'outline' : '' %>" type="submit" style="width:100%;">
+        <%= u.status === 'active' ? '🚫 Block user' : '✅ Unblock user' %>
+      </button>
+    </form>
+    <% if (u.role === 'employer') { %>
+      <form method="POST" action="/admin/users/<%= u.id %>/toggle-review">
+        <input type="hidden" name="_redirect" value="/admin/users/<%= u.id %>?success=1&msg=Job+review+setting+updated.">
+        <button class="btn outline" type="submit" style="width:100%;" title="<%= u.require_review !== 0 ? 'Click to auto-publish jobs' : 'Click to require review' %>">
+          <%= u.require_review !== 0 ? '🔍 Review required' : '⚡ Auto-publish' %>
+        </button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<!-- ── Stats ───────────────────────────────────────── -->
+<div class="up-stats">
+  <div class="up-stat">
+    <div class="up-stat-value"><%= u.city || '—' %></div>
+    <div class="up-stat-label">City</div>
+  </div>
+  <% if (u.role === 'employer') { %>
+    <div class="up-stat">
+      <div class="up-stat-value"><%= jobs.length %></div>
+      <div class="up-stat-label">Jobs posted</div>
+    </div>
+    <div class="up-stat">
+      <div class="up-stat-value"><%= jobs.filter(j=>j.status==='approved').length %></div>
+      <div class="up-stat-label">Live jobs</div>
+    </div>
+    <div class="up-stat">
+      <div class="up-stat-value"><%= jobs.reduce((s,j)=>s+(j.app_count||0),0) %></div>
+      <div class="up-stat-label">Total applicants</div>
+    </div>
+  <% } else { %>
+    <div class="up-stat">
+      <div class="up-stat-value"><%= applications.length %></div>
+      <div class="up-stat-label">Applications</div>
+    </div>
+    <div class="up-stat">
+      <div class="up-stat-value"><%= applications.filter(a=>a.status==='accepted').length %></div>
+      <div class="up-stat-label">Accepted</div>
+    </div>
+    <div class="up-stat">
+      <div class="up-stat-value"><%= applications.filter(a=>a.status==='reviewed').length %></div>
+      <div class="up-stat-label">Reviewed</div>
+    </div>
+  <% } %>
+</div>
+
+<!-- ── Contact info ────────────────────────────────── -->
+<div class="up-section">
+  <div class="up-section-head"><h2>Contact information</h2></div>
+  <div class="up-section-body">
+    <div class="up-info-grid">
+      <div class="up-info-item">
+        <label>Phone</label>
+        <span><%= u.phone || '—' %></span>
+      </div>
+      <div class="up-info-item">
+        <label>Email</label>
+        <span><%= u.email %></span>
+      </div>
+      <div class="up-info-item">
+        <label>Address</label>
+        <span><%= u.address || '—' %></span>
+      </div>
+      <div class="up-info-item">
+        <label>City</label>
+        <span><%= u.city || '—' %></span>
+      </div>
+      <div class="up-info-item">
+        <label>Province</label>
+        <span><%= u.province || '—' %></span>
+      </div>
+      <div class="up-info-item">
+        <label>Postal code</label>
+        <span><%= u.postal_code || '—' %></span>
+      </div>
+      <% if (u.role === 'employer') { %>
+        <div class="up-info-item">
+          <label>Company</label>
+          <span><%= u.company_name || '—' %></span>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- ── Employer: jobs ──────────────────────────────── -->
+<% if (u.role === 'employer') { %>
+  <div class="up-section">
+    <div class="up-section-head"><h2>Posted jobs (<%= jobs.length %>)</h2></div>
+    <div class="up-section-body" style="padding:0 22px;">
+      <% if (jobs.length === 0) { %>
+        <p style="padding:18px 0;color:var(--muted);font-size:0.88rem;">No jobs posted yet.</p>
+      <% } else { %>
+        <% jobs.forEach(j => { %>
+          <div class="up-row">
+            <div>
+              <div class="up-row-title">
+                <a href="/admin/jobs/<%= j.id %>" style="color:inherit;text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><%= j.title %></a>
+              </div>
+              <div class="up-row-meta"><%= j.location %> · <%= j.job_type %> · <%= new Date(j.created_at).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'}) %></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <span class="badge <%= j.status %>"><%= j.status %></span>
+              <span style="font-size:0.8rem;color:var(--muted);"><%= j.app_count %> applicant<%= j.app_count !== 1 ? 's' : '' %></span>
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
+<!-- ── Seeker: applications ────────────────────────── -->
+<% if (u.role === 'seeker') { %>
+  <div class="up-section">
+    <div class="up-section-head"><h2>Applications (<%= applications.length %>)</h2></div>
+    <div class="up-section-body" style="padding:0 22px;">
+      <% if (applications.length === 0) { %>
+        <p style="padding:18px 0;color:var(--muted);font-size:0.88rem;">No applications yet.</p>
+      <% } else { %>
+        <% applications.forEach(a => { %>
+          <div class="up-row">
+            <div>
+              <div class="up-row-title"><%= a.job_title %></div>
+              <div class="up-row-meta"><%= a.company %> · <%= a.location %> · Applied <%= new Date(a.created_at).toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'}) %></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <span class="badge <%= a.status %>"><%= a.status %></span>
+              <% if (a.resume_file) { %>
+                <a href="/resume/<%= a.resume_file %>" target="_blank" style="font-size:0.8rem;color:var(--violet-dark);">Resume</a>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
+<!-- ── Danger zone ─────────────────────────────────── -->
+<div class="up-section danger-zone">
+  <div class="up-section-head"><h2>Danger zone</h2></div>
+  <div class="up-section-body">
+    <div class="danger-zone-text">
+      <p>Delete this account</p>
+      <span>Permanently removes the user and all their data. This cannot be undone.</span>
+    </div>
+    <form method="POST" action="/admin/users/<%= u.id %>/delete"
+          onsubmit="return confirm('Delete <%= u.name %> permanently? This cannot be undone.');">
+      <input type="hidden" name="_redirect" value="/admin/users">
+      <button class="btn danger" type="submit">Delete account</button>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

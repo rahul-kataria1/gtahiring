@@ -1,0 +1,114 @@
+<%- include('../partials/admin-header') %>
+  <style>
+    .review-toggle-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px; font-size: 0.73rem;
+      font-weight: 700; border: none; cursor: pointer; font-family: inherit;
+      transition: opacity 0.15s; white-space: nowrap;
+    }
+    .review-toggle-btn:hover { opacity: 0.80; }
+    .review-on  { background: #d1fae5; color: #065f46; }
+    .review-off { background: #fee2e2; color: #991b1b; }
+    .review-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .review-on  .review-dot { background: #10b981; }
+    .review-off .review-dot { background: #ef4444; }
+
+    th.col-review { white-space: nowrap; }
+  </style>
+
+  <% var q = locals.q || ''; %>
+
+  <h1>Manage users</h1>
+
+  <form class="search-bar" method="GET" action="/admin/users">
+    <% if (role !== 'all') { %><input type="hidden" name="role" value="<%= role %>"><% } %>
+    <input type="text" name="q" placeholder="Search by name or email…" value="<%= q %>" autofocus>
+    <button class="btn" type="submit">Search</button>
+    <% if (q) { %>
+      <a class="btn outline" href="/admin/users<%= role !== 'all' ? '?role=' + role : '' %>">Clear</a>
+    <% } %>
+  </form>
+
+  <div class="filter-tabs">
+    <a href="/admin/users<%= q ? '?q=' + encodeURIComponent(q) : '' %>"
+       class="<%= role === 'all' ? 'active' : '' %>">All</a>
+    <a href="/admin/users?role=seeker<%= q ? '&q=' + encodeURIComponent(q) : '' %>"
+       class="<%= role === 'seeker' ? 'active' : '' %>">Job seekers</a>
+    <a href="/admin/users?role=employer<%= q ? '&q=' + encodeURIComponent(q) : '' %>"
+       class="<%= role === 'employer' ? 'active' : '' %>">Employers</a>
+  </div>
+
+  <% if (users.length === 0) { %>
+    <div class="empty-state">
+      <% if (q) { %>
+        <p>No users match "<strong><%= q %></strong>".</p>
+      <% } else { %>
+        <p>No users in this category.</p>
+      <% } %>
+    </div>
+  <% } else { %>
+    <% if (q) { %>
+      <p class="subtitle" style="margin-bottom:16px;">
+        <%= users.length %> result<%= users.length === 1 ? '' : 's' %> for "<strong><%= q %></strong>"
+      </p>
+    <% } %>
+    <%
+      const hasEmployers = users.some(u => u.role === 'employer');
+    %>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Joined</th>
+          <% if (hasEmployers) { %><th class="col-review">Job review</th><% } %>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(u => { %>
+          <tr>
+            <td><a href="/admin/users/<%= u.id %>" style="font-weight:600;color:var(--violet-dark);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><%= u.name %></a></td>
+            <td><%= u.email %></td>
+            <td><%= u.role %></td>
+            <td><span class="badge <%= u.status %>"><%= u.status %></span></td>
+            <td><%= u.created_at.slice(0, 10) %></td>
+            <% if (hasEmployers) { %>
+              <td>
+                <% if (u.role === 'employer') { %>
+                  <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/toggle-review">
+                    <input type="hidden" name="_q" value="<%= q %>">
+                    <input type="hidden" name="_role" value="<%= role %>">
+                    <button type="submit" class="review-toggle-btn <%= u.require_review !== 0 ? 'review-on' : 'review-off' %>"
+                      title="<%= u.require_review !== 0 ? 'Posts require admin approval — click to auto-publish' : 'Posts go live immediately — click to require approval' %>">
+                      <span class="review-dot"></span>
+                      <%= u.require_review !== 0 ? 'Review required' : 'Auto-publish' %>
+                    </button>
+                  </form>
+                <% } else { %>
+                  <span style="color:var(--border);font-size:0.8rem;">—</span>
+                <% } %>
+              </td>
+            <% } %>
+            <td class="actions">
+              <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/status">
+                <input type="hidden" name="status" value="<%= u.status === 'active' ? 'blocked' : 'active' %>">
+                <input type="hidden" name="_q" value="<%= q %>">
+                <input type="hidden" name="_role" value="<%= role %>">
+                <button class="btn small outline" type="submit"><%= u.status === 'active' ? 'Block' : 'Unblock' %></button>
+              </form>
+              <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/delete"
+                    onsubmit="return confirm('Delete this user permanently?');">
+                <input type="hidden" name="_q" value="<%= q %>">
+                <input type="hidden" name="_role" value="<%= role %>">
+                <button class="btn small danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+<%- include('../partials/admin-footer') %>

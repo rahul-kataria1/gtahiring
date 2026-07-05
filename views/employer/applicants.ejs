@@ -1,0 +1,176 @@
+<%- include('../partials/employer-header') %>
+  <style>
+    .applicant-card { padding: 0; overflow: hidden; position: relative; }
+
+    /* New/unseen highlight */
+    .applicant-card.is-new {
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 1px #93c5fd, 0 4px 16px rgba(0,87,216,0.1);
+    }
+    .applicant-card.is-new::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 4px; background: #0057d8;
+      border-radius: 16px 0 0 16px;
+    }
+
+    .applicant-card-body { padding: 20px 24px 16px 28px; }
+
+    .applicant-name {
+      font-size: 1.05rem; font-weight: 700; margin: 0 0 6px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .new-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #0057d8; color: #fff;
+      font-size: 0.67rem; font-weight: 800; letter-spacing: 0.06em;
+      text-transform: uppercase; padding: 3px 9px; border-radius: 20px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,87,216,0.4); }
+      50%       { box-shadow: 0 0 0 5px rgba(0,87,216,0); }
+    }
+
+    .applicant-meta {
+      color: var(--muted); font-size: 0.84rem;
+      margin-bottom: 14px; display: flex; gap: 14px; flex-wrap: wrap;
+    }
+    .resume-link {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--violet-bg); color: var(--violet-dark);
+      border: 1.5px solid var(--violet-light); border-radius: 8px;
+      padding: 7px 15px; font-size: 0.86rem; font-weight: 600;
+      text-decoration: none; transition: background 0.18s, border-color 0.18s;
+    }
+    .resume-link:hover { background: var(--violet-bg2); border-color: var(--violet); text-decoration: none; color: var(--violet-dark); }
+    .no-resume { font-size: 0.84rem; color: var(--muted); font-style: italic; }
+
+    .applicant-card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap;
+      padding: 11px 24px 11px 28px;
+      border-top: 1px solid var(--border-light);
+      background: #fdfcff;
+    }
+    .applicant-card-footer label { font-size: 0.84rem; color: var(--muted); margin: 0; font-weight: 500; }
+    .applicant-card-footer select { width: auto; padding: 6px 12px; font-size: 0.84rem; border-radius: 7px; }
+
+    .mark-read-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #eff6ff; color: #1d4ed8;
+      border: 1.5px solid #bfdbfe; border-radius: 8px;
+      padding: 5px 13px; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .mark-read-btn:hover { background: #dbeafe; border-color: #93c5fd; }
+    .mark-read-btn svg { width: 13px; height: 13px; }
+
+    /* Top bar */
+    .applicants-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .new-count-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #eff6ff; border: 1.5px solid #bfdbfe;
+      color: #1d4ed8; border-radius: 20px;
+      font-size: 0.82rem; font-weight: 700;
+      padding: 5px 14px;
+    }
+    .mark-all-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #0057d8; color: #fff; border: none;
+      border-radius: 10px; padding: 8px 18px;
+      font-size: 0.84rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.15s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(0,87,216,0.3);
+    }
+    .mark-all-btn:hover { background: #0041a8; box-shadow: 0 4px 14px rgba(0,87,216,0.4); }
+    .mark-all-btn svg { width: 14px; height: 14px; }
+  </style>
+
+  <div class="applicants-topbar">
+    <div>
+      <h1 style="margin:0 0 4px;">Applicants</h1>
+      <p class="subtitle" style="margin:0;">
+        For <strong><%= job.title %></strong> &mdash;
+        <%= applicants.length %> application<%= applicants.length === 1 ? '' : 's' %>
+        <% if (newCount > 0) { %>
+          &nbsp;<span class="new-count-chip">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+            <%= newCount %> new
+          </span>
+        <% } %>
+      </p>
+    </div>
+    <% if (newCount > 0) { %>
+      <form method="POST" action="/employer/jobs/<%= job.id %>/applicants/mark-all-read">
+        <button type="submit" class="mark-all-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          Mark all as read
+        </button>
+      </form>
+    <% } %>
+  </div>
+
+  <% if (applicants.length === 0) { %>
+    <div class="empty-state"><p>No one has applied yet.</p></div>
+  <% } else { %>
+    <% applicants.forEach(a => { %>
+      <div class="card applicant-card <%= !a.seen_by_employer ? 'is-new' : '' %>">
+        <div class="applicant-card-body">
+          <div class="applicant-name">
+            <%= a.applicant_name || a.seeker_name %>
+            <span class="badge <%= a.status %>"><%= a.status %></span>
+            <% if (!a.seen_by_employer) { %>
+              <span class="new-badge">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                New
+              </span>
+            <% } %>
+          </div>
+          <div class="applicant-meta">
+            <span>✉️ <%= a.applicant_email || a.seeker_email %></span>
+            <% if (a.applicant_phone) { %><span>📞 <%= a.applicant_phone %></span><% } %>
+            <span>📅 Applied <time data-timeago="<%= a.created_at %>" title="<%= new Date(a.created_at).toLocaleDateString('en-CA', { year:'numeric', month:'short', day:'numeric' }) %>"></time></span>
+            <% if (a.work_eligible !== null && a.work_eligible !== undefined) { %>
+              <span><%= a.work_eligible ? '✅ Eligible to work in Canada' : '⚠️ Requires sponsorship' %></span>
+            <% } %>
+          </div>
+          <% if (a.resume_file) { %>
+            <a class="resume-link" href="/resume/<%= a.resume_file %>" target="_blank">
+              📄 Download Resume
+            </a>
+          <% } else { %>
+            <span class="no-resume">No resume uploaded</span>
+          <% } %>
+        </div>
+
+        <div class="applicant-card-footer">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <label for="status-<%= a.id %>">Update status:</label>
+            <form method="POST" action="/employer/jobs/<%= job.id %>/applicants/<%= a.id %>/status">
+              <select id="status-<%= a.id %>" name="status" onchange="this.form.submit()">
+                <option value="applied"  <%= a.status === 'applied'  ? 'selected' : '' %>>Applied</option>
+                <option value="reviewed" <%= a.status === 'reviewed' ? 'selected' : '' %>>Reviewed</option>
+                <option value="accepted" <%= a.status === 'accepted' ? 'selected' : '' %>>Accepted</option>
+                <option value="rejected" <%= a.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+              </select>
+            </form>
+          </div>
+          <% if (!a.seen_by_employer) { %>
+            <form method="POST" action="/employer/jobs/<%= job.id %>/applicants/<%= a.id %>/mark-read">
+              <button type="submit" class="mark-read-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                Mark as read
+              </button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+<%- include('../partials/employer-footer') %>

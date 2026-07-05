@@ -1,0 +1,31 @@
+<%- include('../../partials/admin-header') %>
+  <h1>Manage blog</h1>
+  <div class="actions" style="margin-bottom:1.5rem;">
+    <a class="btn" href="/admin/blog/new">New post</a>
+  </div>
+
+  <% if (posts.length === 0) { %>
+    <div class="empty-state"><p>No posts yet. <a href="/admin/blog/new">Write one.</a></p></div>
+  <% } else { %>
+    <% posts.forEach(post => { %>
+      <div class="card job-card">
+        <h3>
+          <%= post.title %>
+          <span class="badge <%= post.published ? 'approved' : 'pending' %>">
+            <%= post.published ? 'Published' : 'Draft' %>
+          </span>
+        </h3>
+        <div class="meta">
+          <span><%= post.created_at.slice(0, 10) %></span>
+          <% if (post.published) { %><a href="/blog/<%= post.slug %>" target="_blank">View →</a><% } %>
+        </div>
+        <div class="actions">
+          <a class="btn small outline" href="/admin/blog/<%= post.id %>/edit">Edit</a>
+          <form class="inline-form" method="POST" action="/admin/blog/<%= post.id %>/delete" onsubmit="return confirm('Delete this post?');">
+            <button class="btn small danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+<%- include('../../partials/admin-footer') %>

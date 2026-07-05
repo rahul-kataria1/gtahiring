@@ -1,0 +1,23 @@
+{
+  "name": "job-board",
+  "version": "1.0.0",
+  "description": "Simple job posting website with job seeker, employer and super admin roles",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node db/seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "multer": "^2.2.0",
+    "node-sqlite3-wasm": "^0.8.59",
+    "nodemailer": "^9.0.1"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^11.10.0"
+  }
+}

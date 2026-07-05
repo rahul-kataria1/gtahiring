@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> · GTA Hiring</title>
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="admin-sidebar-brand">
+      <a href="/employer/dashboard" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+        <img src="/images/logo.png" alt="GTA Hiring" style="height:32px;width:auto;">
+        <div class="admin-sidebar-brand-text">
+          GTA Hiring
+          <span>Employer portal</span>
+        </div>
+      </a>
+    </div>
+
+    <nav class="admin-nav">
+      <div class="admin-nav-section">Jobs</div>
+
+      <a href="/employer/dashboard" class="admin-nav-item" data-path="/employer/dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        My jobs
+      </a>
+
+      <a href="/employer/jobs/new" class="admin-nav-item" data-path="/employer/jobs/new">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Post a job
+      </a>
+
+      <div class="admin-nav-section">Account</div>
+
+      <a href="/profile" class="admin-nav-item" data-path="/profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profile
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Mobile overlay -->
+  <div class="admin-sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Top bar -->
+  <div class="admin-topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="admin-topbar-hamburger" id="sidebarToggle" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="admin-topbar-title"><%= title %></span>
+    </div>
+
+    <div class="admin-topbar-right">
+      <% if (currentUser) { %>
+        <%
+          var _initials = (currentUser.name || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+        %>
+        <a href="/profile" class="admin-topbar-profile" style="text-decoration:none;color:inherit;">
+          <div class="admin-topbar-avatar">
+            <% if (currentUser.avatar) { %>
+              <img src="/uploads/avatars/<%= currentUser.avatar %>" alt="">
+            <% } else { %>
+              <%= _initials %>
+            <% } %>
+          </div>
+          <%= currentUser.name %>
+        </a>
+        <div class="admin-topbar-divider"></div>
+        <form method="POST" action="/logout">
+          <button type="submit" class="admin-logout-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Log out
+          </button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="admin-main">
+    <div class="admin-main-inner">

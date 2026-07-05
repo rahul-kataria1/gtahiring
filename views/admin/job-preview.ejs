@@ -1,0 +1,184 @@
+<%- include('../partials/admin-header') %>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Lato&family=Merriweather&family=Playfair+Display&family=Montserrat&family=Raleway&family=Nunito&family=Pacifico&family=Dancing+Script&display=swap" rel="stylesheet">
+  <style>
+    .review-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 22px;
+      margin-bottom: 24px;
+    }
+    .review-bar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .review-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--muted); font-size: 0.86rem; font-weight: 500;
+      text-decoration: none;
+    }
+    .review-back:hover { color: var(--violet); text-decoration: none; }
+    .review-back svg { width: 14px; height: 14px; }
+    .review-divider { width: 1px; height: 20px; background: var(--border); }
+
+    .tag {
+      display: inline-block; padding: 3px 11px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 700; text-transform: capitalize;
+    }
+    .tag-pending  { background: #fef3c7; color: #92400e; }
+    .tag-approved { background: #d1fae5; color: #065f46; }
+    .tag-rejected { background: #fee2e2; color: #991b1b; }
+
+    /* Job hero */
+    .job-hero {
+      background: linear-gradient(135deg, #001f5b 0%, #0057d8 55%, #4a9af5 100%);
+      border-radius: 20px;
+      padding: 36px 40px;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+    .job-hero h1 { color: #fff; margin-bottom: 16px; font-size: 1.9rem; }
+    .job-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .job-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 13px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+      background: rgba(255,255,255,0.15); color: #fff;
+      border: 1px solid rgba(255,255,255,0.25); white-space: nowrap;
+    }
+    .pill-salary { background: rgba(253,203,110,0.25); color: #ffe599; border-color: rgba(253,203,110,0.4); }
+    .employer-info { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin: 0; }
+    .employer-info strong { color: #fff; }
+
+    /* Description */
+    .desc-card {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden; margin-bottom: 24px;
+    }
+    .desc-card-header {
+      background: linear-gradient(90deg, var(--violet-bg) 0%, #fff 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px; display: flex; align-items: center; gap: 10px;
+    }
+    .desc-card-header::before {
+      content: ''; display: inline-block; width: 4px; height: 20px;
+      background: var(--violet); border-radius: 4px; flex-shrink: 0;
+    }
+    .desc-card-header h2 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--violet-dark); }
+    .desc-card-body { padding: 28px; }
+
+    /* Quill render */
+    .job-description { line-height: 1.8; font-size: 0.96rem; color: var(--text); }
+    .job-description img { max-width: 100%; border-radius: 8px; margin: 1rem 0; }
+    .job-description h1, .job-description h2, .job-description h3 { margin: 1.5rem 0 0.5rem; }
+    .job-description ul, .job-description ol { padding-left: 1.6rem; margin: 0.7rem 0; }
+    .job-description li { margin-bottom: 4px; }
+    .job-description blockquote { border-left: 4px solid var(--violet-light); padding: 0.5rem 1.2rem; color: var(--muted); margin: 1rem 0; background: var(--violet-bg); border-radius: 0 8px 8px 0; }
+    .job-description a { color: var(--violet); }
+    .job-description p { margin-bottom: 0.85rem; }
+    .ql-align-center  { text-align: center; }
+    .ql-align-right   { text-align: right; }
+    .ql-align-justify { text-align: justify; }
+    .ql-size-small  { font-size: 0.8em; }
+    .ql-size-large  { font-size: 1.35em; }
+    .ql-size-huge   { font-size: 1.75em; }
+    .ql-font-georgia      { font-family: Georgia, serif; }
+    .ql-font-courier      { font-family: 'Courier New', monospace; }
+    .ql-font-trebuchet    { font-family: 'Trebuchet MS', sans-serif; }
+    .ql-font-roboto       { font-family: 'Roboto', sans-serif; }
+    .ql-font-opensans     { font-family: 'Open Sans', sans-serif; }
+    .ql-font-lato         { font-family: 'Lato', sans-serif; }
+    .ql-font-merriweather { font-family: 'Merriweather', serif; }
+    .ql-font-playfair     { font-family: 'Playfair Display', serif; }
+    .ql-font-montserrat   { font-family: 'Montserrat', sans-serif; }
+    .ql-font-raleway      { font-family: 'Raleway', sans-serif; }
+    .ql-font-nunito       { font-family: 'Nunito', sans-serif; }
+    .ql-font-pacifico     { font-family: 'Pacifico', cursive; }
+    .ql-font-dancing      { font-family: 'Dancing Script', cursive; }
+
+    /* Decision card */
+    .decision-card {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px 28px;
+    }
+    .decision-card h2 { margin: 0 0 6px; font-size: 1rem; }
+    .decision-card p  { margin: 0 0 18px; font-size: 0.88rem; color: var(--muted); }
+    .decision-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  </style>
+
+  <!-- Review action bar -->
+  <div class="review-bar">
+    <div class="review-bar-left">
+      <a class="review-back" href="/admin/jobs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back to jobs
+      </a>
+      <div class="review-divider"></div>
+      <span class="tag tag-<%= job.status %>"><%= job.status %></span>
+      <% if (!job.active) { %><span class="tag" style="background:#fee2e2;color:#991b1b;">Applications closed</span><% } %>
+      <span style="font-size:0.83rem;color:var(--muted);"><%= applicantCount %> applicant<%= applicantCount !== 1 ? 's' : '' %></span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <% if (job.status !== 'approved') { %>
+        <form class="inline-form" method="POST" action="/admin/jobs/<%= job.id %>/status">
+          <input type="hidden" name="status" value="approved">
+          <button class="btn small" type="submit">Approve</button>
+        </form>
+      <% } %>
+      <% if (job.status !== 'rejected') { %>
+        <form class="inline-form" method="POST" action="/admin/jobs/<%= job.id %>/status">
+          <input type="hidden" name="status" value="rejected">
+          <button class="btn small secondary" type="submit">Reject</button>
+        </form>
+      <% } %>
+      <form class="inline-form" method="POST" action="/admin/jobs/<%= job.id %>/toggle-active">
+        <button type="submit" class="btn small outline">
+          <%= job.active !== 0 ? 'Close applications' : 'Open applications' %>
+        </button>
+      </form>
+      <form class="inline-form" method="POST" action="/admin/jobs/<%= job.id %>/delete" onsubmit="return confirm('Delete this job permanently?');">
+        <button class="btn small danger" type="submit">Delete</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Job hero -->
+  <div class="job-hero">
+    <h1><%= job.title %></h1>
+    <div class="job-pills">
+      <span class="job-pill">🏢 <%= job.company %></span>
+      <span class="job-pill">📍 <%= job.location %></span>
+      <span class="job-pill"><%= job.job_type %></span>
+      <% if (job.salary) { %><span class="job-pill pill-salary">💰 <%= job.salary %></span><% } %>
+    </div>
+    <p class="employer-info">Posted by <strong><%= job.employer_name %></strong> &middot; <%= job.employer_email %> &middot; <time data-timeago="<%= job.created_at %>" title="<%= job.created_at.slice(0, 10) %>"></time></p>
+  </div>
+
+  <!-- Description -->
+  <div class="desc-card">
+    <div class="desc-card-header"><h2>Job description</h2></div>
+    <div class="desc-card-body">
+      <div class="job-description ql-editor" style="padding:0;"><%- job.description %></div>
+    </div>
+  </div>
+
+  <!-- Bottom decision strip -->
+  <% if (job.status === 'pending') { %>
+  <div class="decision-card">
+    <h2>Ready to decide?</h2>
+    <p>This job is pending review. Approve it to make it live on the public board, or reject it.</p>
+    <div class="decision-actions">
+      <form class="inline-form" method="POST" action="/admin/jobs/<%= job.id %>/status">
+        <input type="hidden" name="status" value="approved">
+        <button class="btn" type="submit">Approve &amp; publish</button>
+      </form>
+      <form class="inline-form" method="POST" action="/admin/jobs/<%= job.id %>/status">
+        <input type="hidden" name="status" value="rejected">
+        <button class="btn secondary" type="submit">Reject</button>
+      </form>
+    </div>
+  </div>
+  <% } %>
+
+<%- include('../partials/admin-footer') %>

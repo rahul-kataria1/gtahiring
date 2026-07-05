@@ -1,0 +1,487 @@
+<% if (user.role === 'admin') { %>
+  <%- include('partials/admin-header') %>
+<% } else if (user.role === 'employer') { %>
+  <%- include('partials/employer-header') %>
+<% } else { %>
+  <%- include('partials/header') %>
+<% } %>
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
+  <style>
+    /* ── Crop modal ───────────────────────────────── */
+    .crop-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(10,18,40,0.72); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .crop-overlay.open { display: flex; }
+    .crop-modal {
+      background: #fff; border-radius: 20px; overflow: hidden;
+      width: min(520px, 94vw); box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+      display: flex; flex-direction: column;
+    }
+    .crop-modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px 14px; border-bottom: 1px solid var(--border-light);
+    }
+    .crop-modal-head h3 { margin: 0; font-size: 1rem; }
+    .crop-modal-close {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: none; background: var(--border-light); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: var(--muted); transition: background 0.15s;
+    }
+    .crop-modal-close:hover { background: #fee2e2; color: #991b1b; }
+    .crop-area {
+      background: #111; max-height: 380px; overflow: hidden;
+    }
+    .crop-area img { display: block; max-width: 100%; }
+    .crop-modal-foot {
+      padding: 14px 20px; display: flex; gap: 10px; justify-content: flex-end;
+      border-top: 1px solid var(--border-light); background: #fafafa;
+    }
+    /* circular preview hint */
+    .cropper-view-box, .cropper-face { border-radius: 50%; }
+  </style>
+  <style>
+    .profile-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+    @media (max-width: 660px) { .profile-layout { grid-template-columns: 1fr; } }
+
+    /* ── Sidebar ── */
+    .profile-sidebar {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 20px 24px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(108,92,231,0.06);
+    }
+
+    /* Avatar wrapper — click to upload */
+    .avatar-wrap {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 16px;
+      cursor: pointer;
+    }
+    .avatar-wrap:hover .avatar-overlay { opacity: 1; }
+
+    .profile-avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet) 0%, var(--violet-deeper) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -1px;
+      overflow: hidden;
+      border: 3px solid var(--violet-light);
+    }
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.48);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+      gap: 3px;
+    }
+    .avatar-overlay svg { width: 22px; height: 22px; fill: #fff; }
+    .avatar-overlay span { font-size: 0.68rem; font-weight: 700; color: #fff; letter-spacing: 0.04em; }
+
+    /* Hidden file input fills the whole avatar-wrap */
+    #avatar-input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      border-radius: 50%;
+    }
+
+    .avatar-hint { font-size: 0.75rem; color: var(--muted); margin-bottom: 14px; }
+
+    .profile-sidebar-name  { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+    .profile-sidebar-email { font-size: 0.82rem; color: var(--muted); word-break: break-all; margin-bottom: 14px; }
+    .profile-sidebar-role  {
+      display: inline-block;
+      background: var(--violet-bg);
+      color: var(--violet-dark);
+      border: 1px solid var(--violet-light);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: capitalize;
+    }
+
+    /* ── Section cards ── */
+    .profile-section {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 12px rgba(108,92,231,0.06);
+    }
+    .profile-section:last-child { margin-bottom: 0; }
+    .profile-section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border-light);
+      background: linear-gradient(90deg, var(--violet-bg) 0%, #fff 100%);
+    }
+    .profile-section-header::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background: var(--violet);
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .profile-section-header h2 {
+      margin: 0;
+      font-size: 0.93rem;
+      font-weight: 700;
+      color: var(--violet-dark);
+    }
+    .profile-section-body { padding: 22px 24px; }
+
+    /* ── Field grid ── */
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+    @media (max-width: 540px) { .field-grid { grid-template-columns: 1fr; } }
+    .field-grid .field.full { grid-column: 1 / -1; }
+
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-size: 0.79rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .field input {
+      display: block;
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: 0.93rem;
+      font-family: inherit;
+      background: #fdfcff;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      box-sizing: border-box;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: var(--violet);
+      box-shadow: 0 0 0 3px rgba(108,92,231,0.12);
+      background: #fff;
+    }
+    .field input[readonly] {
+      background: #f4f4f8;
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+    .field-hint { font-size: 0.78rem; color: var(--muted); margin-top: 5px; }
+
+    .profile-actions { display: flex; align-items: center; gap: 12px; padding-top: 4px; }
+
+    .addr-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr 0.9fr;
+      gap: 14px;
+    }
+    @media (max-width: 540px) { .addr-grid { grid-template-columns: 1fr; } }
+
+    .field select {
+      display: block;
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: 0.93rem;
+      font-family: inherit;
+      background: #fdfcff;
+      color: var(--text);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      cursor: pointer;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      box-sizing: border-box;
+    }
+    .field select:focus {
+      outline: none;
+      border-color: var(--violet);
+      box-shadow: 0 0 0 3px rgba(108,92,231,0.12);
+      background-color: #fff;
+    }
+  </style>
+
+  <h1 style="margin-bottom:24px;">My profile</h1>
+
+  <% if (success) { %>
+    <div class="alert success" style="margin-bottom:20px;">Profile updated successfully.</div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert error" style="margin-bottom:20px;"><%= error %></div>
+  <% } %>
+
+  <%
+    var initials = (user.name || '?').split(' ').map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
+    var roleLabel = user.role === 'seeker' ? 'Job seeker' : user.role === 'employer' ? 'Employer' : 'Admin';
+  %>
+
+  <div class="profile-layout">
+
+    <!-- Sidebar -->
+    <div class="profile-sidebar">
+
+      <!-- Avatar upload form — submitted programmatically after crop -->
+      <form method="POST" action="/profile/avatar" enctype="multipart/form-data" id="avatar-form">
+        <div class="avatar-wrap" title="Click to change photo" id="avatar-wrap-btn" style="cursor:pointer;">
+          <div class="profile-avatar" id="avatar-display">
+            <% if (user.avatar) { %>
+              <img id="avatar-preview" src="/uploads/avatars/<%= user.avatar %>" alt="<%= user.name %>">
+            <% } else { %>
+              <span id="avatar-initials"><%= initials %></span>
+            <% } %>
+          </div>
+          <div class="avatar-overlay">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 15.2A3.2 3.2 0 1 1 15.2 12 3.2 3.2 0 0 1 12 15.2zm0-14.2L9.5 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-5.5z"/>
+            </svg>
+            <span>Change photo</span>
+          </div>
+        </div>
+        <!-- Hidden real file input — triggered programmatically -->
+        <input type="file" id="avatar-input" name="avatar" accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.heic,.heif" style="display:none;">
+      </form>
+
+      <!-- Crop modal -->
+      <div class="crop-overlay" id="cropOverlay">
+        <div class="crop-modal">
+          <div class="crop-modal-head">
+            <h3>Crop your photo</h3>
+            <button type="button" class="crop-modal-close" id="cropCancel" aria-label="Cancel">&#x2715;</button>
+          </div>
+          <div class="crop-area">
+            <img id="cropImage" src="" alt="">
+          </div>
+          <div class="crop-modal-foot">
+            <button type="button" class="btn outline" id="cropCancelBtn">Cancel</button>
+            <button type="button" class="btn" id="cropApply">Apply &amp; upload</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="avatar-hint">JPEG, PNG, GIF, WebP or HEIC · max 2 MB</p>
+      <div class="profile-sidebar-name"><%= user.name %></div>
+      <div class="profile-sidebar-email"><%= user.email %></div>
+      <span class="profile-sidebar-role"><%= roleLabel %></span>
+    </div>
+
+    <!-- Main forms -->
+    <div>
+      <form method="POST" action="/profile">
+
+        <div class="profile-section">
+          <div class="profile-section-header"><h2>Personal information</h2></div>
+          <div class="profile-section-body">
+            <div class="field-grid">
+              <div class="field">
+                <label for="name">Full name</label>
+                <input id="name" name="name" type="text" value="<%= user.name %>" required placeholder="Your full name">
+              </div>
+              <div class="field">
+                <label for="email">Email address</label>
+                <input id="email" name="email" type="email" value="<%= user.email %>" required placeholder="you@example.com">
+              </div>
+              <div class="field">
+                <label for="phone">Phone number</label>
+                <input id="phone" name="phone" type="tel" value="<%= user.phone || '' %>" placeholder="+1 (416) 000-0000">
+              </div>
+              <% if (user.role === 'employer') { %>
+                <div class="field">
+                  <label for="company_name">Company name</label>
+                  <input id="company_name" name="company_name" type="text" value="<%= user.company_name || '' %>" placeholder="Your company">
+                </div>
+              <% } else { %>
+                <div class="field"></div><%# keeps grid aligned %>
+              <% } %>
+              <div class="field full">
+                <label for="address">Street address</label>
+                <input id="address" name="address" type="text" value="<%= user.address || '' %>" placeholder="123 Main St, Apt 4B">
+              </div>
+              <!-- city / province / postal in a 3-column sub-grid -->
+              <div class="field full">
+                <div class="addr-grid">
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="city">City</label>
+                    <input id="city" name="city" type="text" value="<%= user.city || '' %>" placeholder="Toronto">
+                  </div>
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="province">Province / Territory</label>
+                    <select id="province" name="province">
+                      <option value="">— Select —</option>
+                      <% var _provinces = [
+                        ['AB','Alberta'],['BC','British Columbia'],['MB','Manitoba'],
+                        ['NB','New Brunswick'],['NL','Newfoundland and Labrador'],
+                        ['NT','Northwest Territories'],['NS','Nova Scotia'],
+                        ['NU','Nunavut'],['ON','Ontario'],['PE','Prince Edward Island'],
+                        ['QC','Quebec'],['SK','Saskatchewan'],['YT','Yukon']
+                      ]; %>
+                      <% _provinces.forEach(function(p) { %>
+                        <option value="<%= p[0] %>" <%= (user.province || '') === p[0] ? 'selected' : '' %>>
+                          <%= p[1] %> (<%= p[0] %>)
+                        </option>
+                      <% }); %>
+                    </select>
+                  </div>
+                  <div class="field" style="margin-bottom:0;">
+                    <label for="postal_code">Postal code</label>
+                    <input id="postal_code" name="postal_code" type="text" value="<%= user.postal_code || '' %>" placeholder="M5V 1A1" maxlength="7">
+                  </div>
+                </div>
+              </div>
+              <div class="field full">
+                <label for="role_display">Account type</label>
+                <input id="role_display" type="text" value="<%= roleLabel %>" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-section-header"><h2>Change password</h2></div>
+          <div class="profile-section-body">
+            <p class="field-hint" style="margin-bottom:16px;">Leave blank to keep your current password.</p>
+            <div class="field-grid">
+              <div class="field">
+                <label for="new_password">New password</label>
+                <input id="new_password" name="new_password" type="password" placeholder="Min. 6 characters" autocomplete="new-password">
+              </div>
+              <div class="field">
+                <label for="confirm_password">Confirm new password</label>
+                <input id="confirm_password" name="confirm_password" type="password" placeholder="Repeat new password" autocomplete="new-password">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <button class="btn" type="submit">Save changes</button>
+          <a class="btn outline" href="/dashboard">Back to dashboard</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
+  <script>
+    (function () {
+      var wrapBtn   = document.getElementById('avatar-wrap-btn');
+      var input     = document.getElementById('avatar-input');
+      var form      = document.getElementById('avatar-form');
+      var display   = document.getElementById('avatar-display');
+      var overlay   = document.getElementById('cropOverlay');
+      var cropImg   = document.getElementById('cropImage');
+      var applyBtn  = document.getElementById('cropApply');
+      var cropper   = null;
+
+      function closeCropModal() {
+        overlay.classList.remove('open');
+        if (cropper) { cropper.destroy(); cropper = null; }
+        input.value = '';
+      }
+
+      // Open file dialog when avatar circle is clicked
+      wrapBtn.addEventListener('click', function () { input.click(); });
+
+      // File chosen → open crop modal
+      input.addEventListener('change', function () {
+        var file = input.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          cropImg.src = e.target.result;
+          overlay.classList.add('open');
+          if (cropper) { cropper.destroy(); }
+          cropper = new Cropper(cropImg, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 0.85,
+            restore: false,
+            guides: false,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Apply crop → convert canvas → inject as file → submit
+      applyBtn.addEventListener('click', function () {
+        if (!cropper) return;
+        var canvas = cropper.getCroppedCanvas({ width: 400, height: 400, imageSmoothingQuality: 'high' });
+        canvas.toBlob(function (blob) {
+          var croppedFile = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+          var dt = new DataTransfer();
+          dt.items.add(croppedFile);
+          input.files = dt.files;
+
+          // Show preview immediately
+          display.innerHTML = '<img src="' + canvas.toDataURL('image/jpeg') + '" alt="Preview" style="width:100%;height:100%;object-fit:cover;display:block;">';
+
+          overlay.classList.remove('open');
+          if (cropper) { cropper.destroy(); cropper = null; }
+          form.submit();
+        }, 'image/jpeg', 0.92);
+      });
+
+      document.getElementById('cropCancel').addEventListener('click', closeCropModal);
+      document.getElementById('cropCancelBtn').addEventListener('click', closeCropModal);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeCropModal(); });
+    }());
+  </script>
+<% if (user.role === 'admin') { %>
+  <%- include('partials/admin-footer') %>
+<% } else if (user.role === 'employer') { %>
+  <%- include('partials/employer-footer') %>
+<% } else { %>
+  <%- include('partials/footer') %>
+<% } %>

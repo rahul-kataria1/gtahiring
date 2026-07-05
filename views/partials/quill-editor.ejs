@@ -1,0 +1,125 @@
+<%
+  var _minH    = typeof minHeight   !== 'undefined' ? minHeight   : '320px';
+  var _emptyMsg = typeof emptyMsg   !== 'undefined' ? emptyMsg    : 'Content cannot be empty.';
+%>
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Lato&family=Merriweather&family=Playfair+Display&family=Montserrat&family=Raleway&family=Nunito&family=Pacifico&family=Dancing+Script&display=swap" rel="stylesheet">
+<style>
+  #qe-wrap-<%= fieldName %> .ql-editor { min-height: <%= _minH %>; font-size: 1rem; line-height: 1.75; }
+  #qe-wrap-<%= fieldName %> .ql-toolbar.ql-snow { border-radius: 9px 9px 0 0; border-color: var(--border); background: #f9f9fb; }
+  #qe-wrap-<%= fieldName %> .ql-container.ql-snow { border-radius: 0 0 9px 9px; border-color: var(--border); background: #fff; }
+  #qe-wrap-<%= fieldName %> .ql-editor:focus { outline: none; box-shadow: 0 0 0 3px rgba(108,92,231,0.1); border-radius: 0 0 9px 9px; }
+
+  /* Font picker width + preview labels */
+  .ql-snow .ql-picker.ql-font { width: 155px; }
+  .ql-snow .ql-picker.ql-font .ql-picker-label::before,
+  .ql-snow .ql-picker.ql-font .ql-picker-item::before          { content: 'Default'; }
+  .ql-snow .ql-picker.ql-font [data-value=georgia]::before     { content:'Georgia';         font-family:Georgia,serif; }
+  .ql-snow .ql-picker.ql-font [data-value=courier]::before     { content:'Courier New';     font-family:'Courier New',monospace; }
+  .ql-snow .ql-picker.ql-font [data-value=trebuchet]::before   { content:'Trebuchet MS';    font-family:'Trebuchet MS',sans-serif; }
+  .ql-snow .ql-picker.ql-font [data-value=roboto]::before      { content:'Roboto';          font-family:'Roboto',sans-serif; }
+  .ql-snow .ql-picker.ql-font [data-value=opensans]::before    { content:'Open Sans';       font-family:'Open Sans',sans-serif; }
+  .ql-snow .ql-picker.ql-font [data-value=lato]::before        { content:'Lato';            font-family:'Lato',sans-serif; }
+  .ql-snow .ql-picker.ql-font [data-value=merriweather]::before { content:'Merriweather';   font-family:'Merriweather',serif; }
+  .ql-snow .ql-picker.ql-font [data-value=playfair]::before    { content:'Playfair Display';font-family:'Playfair Display',serif; }
+  .ql-snow .ql-picker.ql-font [data-value=montserrat]::before  { content:'Montserrat';      font-family:'Montserrat',sans-serif; }
+  .ql-snow .ql-picker.ql-font [data-value=raleway]::before     { content:'Raleway';         font-family:'Raleway',sans-serif; }
+  .ql-snow .ql-picker.ql-font [data-value=nunito]::before      { content:'Nunito';          font-family:'Nunito',sans-serif; }
+  .ql-snow .ql-picker.ql-font [data-value=pacifico]::before    { content:'Pacifico';        font-family:'Pacifico',cursive; }
+  .ql-snow .ql-picker.ql-font [data-value=dancing]::before     { content:'Dancing Script';  font-family:'Dancing Script',cursive; }
+
+  /* Font classes applied to content */
+  .ql-font-georgia      { font-family: Georgia, serif; }
+  .ql-font-courier      { font-family: 'Courier New', monospace; }
+  .ql-font-trebuchet    { font-family: 'Trebuchet MS', sans-serif; }
+  .ql-font-roboto       { font-family: 'Roboto', sans-serif; }
+  .ql-font-opensans     { font-family: 'Open Sans', sans-serif; }
+  .ql-font-lato         { font-family: 'Lato', sans-serif; }
+  .ql-font-merriweather { font-family: 'Merriweather', serif; }
+  .ql-font-playfair     { font-family: 'Playfair Display', serif; }
+  .ql-font-montserrat   { font-family: 'Montserrat', sans-serif; }
+  .ql-font-raleway      { font-family: 'Raleway', sans-serif; }
+  .ql-font-nunito       { font-family: 'Nunito', sans-serif; }
+  .ql-font-pacifico     { font-family: 'Pacifico', cursive; }
+  .ql-font-dancing      { font-family: 'Dancing Script', cursive; }
+</style>
+
+<div id="qe-wrap-<%= fieldName %>">
+  <div id="qe-<%= fieldName %>"></div>
+</div>
+<textarea id="<%= fieldName %>" name="<%= fieldName %>" style="display:none;"></textarea>
+
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+(function () {
+  /* Register fonts once — guard against double-registration on pages
+     that include this partial more than once.                         */
+  if (!window.__quillFontsRegistered) {
+    var Font = Quill.import('formats/font');
+    Font.whitelist = ['georgia','courier','trebuchet','roboto','opensans','lato',
+                      'merriweather','playfair','montserrat','raleway','nunito',
+                      'pacifico','dancing'];
+    Quill.register(Font, true);
+    window.__quillFontsRegistered = true;
+  }
+
+  var quill = new Quill('#qe-<%= fieldName %>', {
+    theme: 'snow',
+    modules: {
+      toolbar: [
+        [{ font: ['','georgia','courier','trebuchet','roboto','opensans','lato',
+                  'merriweather','playfair','montserrat','raleway','nunito',
+                  'pacifico','dancing'] }],
+        [{ size: ['small', false, 'large', 'huge'] }],
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ color: [] }, { background: [] }],
+        [{ align: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ indent: '-1' }, { indent: '+1' }],
+        ['blockquote', 'link'],
+        ['clean'],
+      ],
+    },
+  });
+
+  /* ── FIX 1: load existing HTML through the clipboard module so  ──
+     Quill's internal delta stays in sync with the displayed content.
+     Direct innerHTML assignment bypasses the delta and breaks all
+     selection-based formatting.                                      */
+  <% if (typeof initialHtml !== 'undefined' && initialHtml) { %>
+    quill.clipboard.dangerouslyPasteHTML(<%- JSON.stringify(initialHtml) %>);
+    quill.setSelection(null); /* deselect the auto-selected paste range */
+  <% } %>
+
+  /* ── FIX 2: prevent toolbar clicks from stealing focus / clearing ──
+     the editor's selection. We stop mousedown propagation on every
+     toolbar element except native <input> (colour pickers, link box)
+     so those still receive focus naturally.                           */
+  var toolbar = quill.getModule('toolbar').container;
+  toolbar.addEventListener('mousedown', function (e) {
+    if (e.target.tagName !== 'INPUT') {
+      e.preventDefault();
+    }
+  });
+
+  /* ── FIX 3: track the last non-null selection so custom handlers  ──
+     (e.g. link) can fall back to it when focus has temporarily left. */
+  var lastRange = null;
+  quill.on('selection-change', function (range) {
+    if (range) lastRange = range;
+  });
+
+  /* Copy HTML to the hidden textarea on submit */
+  document.getElementById('<%= formId %>').addEventListener('submit', function (e) {
+    var html = quill.root.innerHTML;
+    if (html === '<p><br></p>') {
+      e.preventDefault();
+      quill.focus();
+      alert('<%= _emptyMsg %>');
+      return;
+    }
+    document.getElementById('<%= fieldName %>').value = html;
+  });
+}());
+</script>

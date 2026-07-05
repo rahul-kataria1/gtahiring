@@ -1,0 +1,178 @@
+<%- include('../../partials/admin-header') %>
+  <style>
+    .page-edit-layout {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 760px) { .page-edit-layout { grid-template-columns: 1fr; } }
+
+    .edit-card {
+      background: #fff; border: 1.5px solid var(--border);
+      border-radius: 18px; overflow: hidden;
+    }
+    .edit-card-head {
+      background: linear-gradient(135deg, #001f5b 0%, #0057d8 60%, #4a9af5 100%);
+      padding: 20px 26px; color: #fff;
+    }
+    .edit-card-head h2 { color: #fff; font-size: 1.05rem; margin: 0 0 2px; }
+    .edit-card-head p  { color: rgba(255,255,255,0.65); font-size: 0.82rem; margin: 0; }
+    .edit-card-body { padding: 24px 26px; }
+
+    .content-textarea {
+      font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+      font-size: 0.83rem; line-height: 1.7;
+      resize: vertical; min-height: 340px;
+    }
+    .html-hint {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.76rem; color: var(--muted);
+      background: var(--border-light); border-radius: 7px;
+      padding: 7px 12px; margin-top: 8px;
+    }
+    .html-hint svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--violet); }
+
+    /* Sidebar */
+    .sidebar-card {
+      background: #fff; border: 1.5px solid var(--border);
+      border-radius: 16px; overflow: hidden; margin-bottom: 16px;
+    }
+    .sidebar-card:last-child { margin-bottom: 0; }
+    .sidebar-card-head {
+      padding: 12px 18px; border-bottom: 1px solid var(--border-light);
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--muted);
+    }
+    .sidebar-card-body { padding: 14px 18px; }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 0; border-bottom: 1px solid var(--border-light);
+      font-size: 0.85rem; text-decoration: none; color: var(--text);
+      transition: color 0.15s;
+    }
+    .sidebar-link:last-child { border-bottom: none; padding-bottom: 0; }
+    .sidebar-link:hover { color: var(--violet); text-decoration: none; }
+    .sidebar-link svg { width: 14px; height: 14px; color: var(--muted); flex-shrink: 0; }
+    .sidebar-link.active { color: var(--violet); font-weight: 600; }
+    .sidebar-link.active svg { color: var(--violet); }
+    .preview-btn {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      background: var(--violet-bg); color: var(--violet-dark);
+      border: 1.5px solid var(--violet-light); border-radius: 10px;
+      padding: 9px 16px; font-size: 0.84rem; font-weight: 600;
+      text-decoration: none; transition: background 0.15s;
+      margin-top: 4px;
+    }
+    .preview-btn:hover { background: var(--violet-bg2); text-decoration: none; color: var(--violet-dark); }
+    .preview-btn svg { width: 14px; height: 14px; }
+
+    /* Meta fields (contact page) */
+    .meta-section-title {
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--muted);
+      margin: 22px 0 12px; padding-top: 22px;
+      border-top: 1px solid var(--border-light);
+    }
+  </style>
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap;">
+    <a class="btn outline small" href="/admin/pages">← Pages</a>
+    <h1 style="margin:0;font-size:1.35rem;">Edit: <%= page.title %></h1>
+  </div>
+
+  <% if (error)   { %><div class="alert error"   style="margin-bottom:18px;"><%= error %></div><% } %>
+  <% if (success) { %><div class="alert success" style="margin-bottom:18px;"><%= success %></div><% } %>
+
+  <div class="page-edit-layout">
+
+    <!-- Form -->
+    <form method="POST" action="/admin/pages/<%= page.slug %>/edit">
+      <div class="edit-card">
+        <div class="edit-card-head">
+          <h2><%= page.title %></h2>
+          <p>Public URL: <strong>/<%= page.slug %></strong></p>
+        </div>
+        <div class="edit-card-body">
+
+          <div class="field">
+            <label for="title">Page title</label>
+            <input id="title" name="title" type="text" value="<%= page.title %>" required>
+          </div>
+
+          <% if (page.slug === 'contact') { %>
+            <div class="field">
+              <label for="content">Intro text</label>
+              <textarea id="content" name="content" rows="3"><%= page.content %></textarea>
+            </div>
+
+            <div class="meta-section-title">Contact information</div>
+
+            <div class="field">
+              <label for="email">Email address</label>
+              <input id="email" name="email" type="email" value="<%= meta.email || '' %>" placeholder="hello@gtahiring.ca">
+            </div>
+            <div class="field">
+              <label for="location">Location</label>
+              <input id="location" name="location" type="text" value="<%= meta.location || '' %>" placeholder="Greater Toronto Area, Ontario">
+            </div>
+            <div class="field">
+              <label for="response_time">Response time</label>
+              <input id="response_time" name="response_time" type="text" value="<%= meta.response_time || '' %>" placeholder="Within 1–2 business days">
+            </div>
+
+          <% } else { %>
+            <div class="field">
+              <label for="content">Page content <span style="color:var(--muted);font-weight:400;">(HTML supported)</span></label>
+              <textarea id="content" name="content" class="content-textarea"><%= page.content %></textarea>
+              <div class="html-hint">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Use <code>&lt;h2&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;ul&gt;</code>, <code>&lt;li&gt;</code>, <code>&lt;strong&gt;</code>, and <code>&lt;a href="…"&gt;</code> tags to format this page.
+              </div>
+            </div>
+          <% } %>
+
+          <div style="display:flex;gap:10px;margin-top:6px;">
+            <button class="btn" type="submit" style="flex:1;justify-content:center;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save changes
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </form>
+
+    <!-- Sidebar -->
+    <aside>
+      <div class="sidebar-card">
+        <div class="sidebar-card-head">All pages</div>
+        <div class="sidebar-card-body">
+          <a class="sidebar-link <%= page.slug === 'privacy' ? 'active' : '' %>" href="/admin/pages/privacy/edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Privacy Policy
+          </a>
+          <a class="sidebar-link <%= page.slug === 'terms' ? 'active' : '' %>" href="/admin/pages/terms/edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Terms &amp; Conditions
+          </a>
+          <a class="sidebar-link <%= page.slug === 'contact' ? 'active' : '' %>" href="/admin/pages/contact/edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Contact Us
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-card-head">Actions</div>
+        <div class="sidebar-card-body">
+          <a class="preview-btn" href="/<%= page.slug %>" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Preview live page
+          </a>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+<%- include('../../partials/admin-footer') %>

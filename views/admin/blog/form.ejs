@@ -1,0 +1,215 @@
+<%- include('../../partials/admin-header') %>
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Lato&family=Merriweather&family=Playfair+Display&family=Montserrat&family=Raleway&family=Nunito&family=Pacifico&family=Dancing+Script&display=swap" rel="stylesheet">
+  <style>
+    #editor-container { background: #fff; border-radius: 6px; }
+    .ql-editor { min-height: 420px; font-size: 1rem; line-height: 1.7; }
+    .ql-toolbar.ql-snow { border-radius: 6px 6px 0 0; border-color: var(--border); background: #f9f9f9; }
+    .ql-container.ql-snow { border-radius: 0 0 6px 6px; border-color: var(--border); }
+
+    /* Font picker labels — each previews in its own face */
+    .ql-snow .ql-picker.ql-font { width: 160px; }
+    .ql-snow .ql-picker.ql-font .ql-picker-label::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item::before { content: 'Default'; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=georgia]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=georgia]::before
+      { content: 'Georgia'; font-family: Georgia, serif; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=courier]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=courier]::before
+      { content: 'Courier New'; font-family: 'Courier New', monospace; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=trebuchet]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=trebuchet]::before
+      { content: 'Trebuchet MS'; font-family: 'Trebuchet MS', sans-serif; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=roboto]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=roboto]::before
+      { content: 'Roboto'; font-family: 'Roboto', sans-serif; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=opensans]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=opensans]::before
+      { content: 'Open Sans'; font-family: 'Open Sans', sans-serif; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=lato]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=lato]::before
+      { content: 'Lato'; font-family: 'Lato', sans-serif; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=merriweather]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=merriweather]::before
+      { content: 'Merriweather'; font-family: 'Merriweather', serif; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=playfair]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=playfair]::before
+      { content: 'Playfair Display'; font-family: 'Playfair Display', serif; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=montserrat]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=montserrat]::before
+      { content: 'Montserrat'; font-family: 'Montserrat', sans-serif; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=raleway]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=raleway]::before
+      { content: 'Raleway'; font-family: 'Raleway', sans-serif; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=nunito]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=nunito]::before
+      { content: 'Nunito'; font-family: 'Nunito', sans-serif; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=pacifico]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=pacifico]::before
+      { content: 'Pacifico'; font-family: 'Pacifico', cursive; }
+
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=dancing]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=dancing]::before
+      { content: 'Dancing Script'; font-family: 'Dancing Script', cursive; }
+
+    /* Actual font classes applied to editor content */
+    .ql-font-georgia     { font-family: Georgia, serif; }
+    .ql-font-courier     { font-family: 'Courier New', monospace; }
+    .ql-font-trebuchet   { font-family: 'Trebuchet MS', sans-serif; }
+    .ql-font-roboto      { font-family: 'Roboto', sans-serif; }
+    .ql-font-opensans    { font-family: 'Open Sans', sans-serif; }
+    .ql-font-lato        { font-family: 'Lato', sans-serif; }
+    .ql-font-merriweather { font-family: 'Merriweather', serif; }
+    .ql-font-playfair    { font-family: 'Playfair Display', serif; }
+    .ql-font-montserrat  { font-family: 'Montserrat', sans-serif; }
+    .ql-font-raleway     { font-family: 'Raleway', sans-serif; }
+    .ql-font-nunito      { font-family: 'Nunito', sans-serif; }
+    .ql-font-pacifico    { font-family: 'Pacifico', cursive; }
+    .ql-font-dancing     { font-family: 'Dancing Script', cursive; }
+  </style>
+
+  <h1><%= title %></h1>
+
+  <% if (error) { %>
+    <div class="alert error"><%= error %></div>
+  <% } %>
+
+  <form id="blog-form" method="POST" action="/admin/blog/<%= post && post.id ? post.id + '/edit' : 'new' %>" enctype="multipart/form-data">
+    <div class="form-group">
+      <label for="title">Title</label>
+      <input id="title" name="title" type="text" required value="<%= post ? post.title : '' %>">
+    </div>
+
+    <div class="form-group">
+      <label>Content</label>
+      <div id="editor-container">
+        <div id="quill-editor"></div>
+      </div>
+      <textarea id="body" name="body" style="display:none;"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Featured image</label>
+      <% if (post && post.featured_image) { %>
+        <div style="margin-bottom:12px;">
+          <img src="/uploads/blog/<%= post.featured_image %>" alt="Featured image"
+            style="max-height:140px;max-width:100%;border-radius:10px;border:1px solid var(--border);display:block;margin-bottom:8px;">
+          <label style="display:inline-flex;align-items:center;gap:7px;font-weight:normal;font-size:0.88rem;color:var(--muted);cursor:pointer;">
+            <input type="checkbox" name="remove_featured_image" value="1"> Remove featured image
+          </label>
+        </div>
+      <% } %>
+      <input type="file" name="featured_image" accept="image/jpeg,image/png,image/webp,image/gif" style="padding:8px 12px;">
+      <p class="help">Optional. Displayed as a thumbnail on the public blog listing page. Max 5 MB.</p>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input type="checkbox" name="published" value="1" <%= post && post.published ? 'checked' : '' %>>
+        Publish immediately
+      </label>
+    </div>
+
+    <div class="actions">
+      <button class="btn" type="submit">Save post</button>
+      <a class="btn outline" href="/admin/blog">Cancel</a>
+    </div>
+  </form>
+
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+  <script>
+    if (!window.__quillFontsRegistered) {
+      var Font = Quill.import('formats/font');
+      Font.whitelist = ['georgia','courier','trebuchet','roboto','opensans','lato',
+                        'merriweather','playfair','montserrat','raleway','nunito',
+                        'pacifico','dancing'];
+      Quill.register(Font, true);
+      window.__quillFontsRegistered = true;
+    }
+
+    var quill = new Quill('#quill-editor', {
+      theme: 'snow',
+      modules: {
+        toolbar: {
+          container: [
+            [{ font: ['', 'georgia', 'courier', 'trebuchet', 'roboto', 'opensans', 'lato', 'merriweather', 'playfair', 'montserrat', 'raleway', 'nunito', 'pacifico', 'dancing'] }],
+            [{ size: ['small', false, 'large', 'huge'] }],
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ color: [] }, { background: [] }],
+            [{ align: [] }],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            [{ indent: '-1' }, { indent: '+1' }],
+            ['blockquote', 'code-block'],
+            ['link', 'image'],
+            ['clean'],
+          ],
+          handlers: { image: imageHandler },
+        },
+      },
+    });
+
+    /* ── FIX 1: use clipboard module so Quill's delta stays in sync ── */
+    <% if (post && post.body) { %>
+      quill.clipboard.dangerouslyPasteHTML(<%- JSON.stringify(post.body) %>);
+      quill.setSelection(null);
+    <% } %>
+
+    /* ── FIX 2: prevent toolbar clicks from clearing the selection ── */
+    var toolbar = quill.getModule('toolbar').container;
+    toolbar.addEventListener('mousedown', function (e) {
+      if (e.target.tagName !== 'INPUT') e.preventDefault();
+    });
+
+    /* ── FIX 3: track last selection so image handler can use it ── */
+    var lastRange = null;
+    quill.on('selection-change', function (range) {
+      if (range) lastRange = range;
+    });
+
+    function imageHandler() {
+      var insertRange = lastRange || { index: quill.getLength(), length: 0 };
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/jpeg,image/png,image/gif,image/webp';
+      input.click();
+      input.onchange = function () {
+        var file = input.files[0];
+        if (!file) return;
+        var form = new FormData();
+        form.append('image', file);
+        fetch('/admin/blog/upload-image', { method: 'POST', body: form })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.url) {
+              quill.insertEmbed(insertRange.index, 'image', data.url);
+              quill.setSelection(insertRange.index + 1);
+            }
+          })
+          .catch(function () { alert('Image upload failed. Max size is 5 MB.'); });
+      };
+    }
+
+    document.getElementById('blog-form').addEventListener('submit', function (e) {
+      var html = quill.root.innerHTML;
+      if (html === '<p><br></p>') {
+        e.preventDefault();
+        alert('Content cannot be empty.');
+        return;
+      }
+      document.getElementById('body').value = html;
+    });
+  </script>
+<%- include('../../partials/admin-footer') %>

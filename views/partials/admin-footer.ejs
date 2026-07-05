@@ -1,0 +1,31 @@
+    </div><!-- /.admin-main-inner -->
+  </div><!-- /.admin-main -->
+
+  <script>
+    // Active sidebar item
+    const _path = window.location.pathname;
+    const _role = new URLSearchParams(window.location.search).get('role');
+    document.querySelectorAll('.admin-nav-item[data-path]').forEach(el => {
+      const p = el.dataset.path;
+      if (_path === p || (p !== '/admin/dashboard' && _path.startsWith(p))) {
+        el.classList.add('active');
+      }
+    });
+    // Active sub-menu item
+    document.querySelectorAll('.admin-nav-sub-item[data-role]').forEach(el => {
+      if (_path === '/admin/users' && el.dataset.role === _role) {
+        el.classList.add('active');
+      }
+    });
+
+    // Mobile sidebar toggle
+    const sidebar  = document.getElementById('adminSidebar');
+    const overlay  = document.getElementById('sidebarOverlay');
+    const toggle   = document.getElementById('sidebarToggle');
+    function openSidebar()  { sidebar.classList.add('open'); overlay.classList.add('open'); }
+    function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+    toggle.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+    overlay.addEventListener('click', closeSidebar);
+  </script>
+</body>
+</html>

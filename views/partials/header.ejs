@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> · GTA Hiring</title>
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/">
+        <img src="/images/logo.png" alt="GTA Hiring logo" class="brand-logo">
+      </a>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
+        <svg class="icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="/" data-path="/">Find jobs</a>
+        <a href="/blog" data-path="/blog">Blog</a>
+        <% if (!currentUser) { %>
+          <a href="/login">Log in</a>
+          <a href="/register" class="nav-cta">Sign up</a>
+        <% } else { %>
+          <% var _navInitials = (currentUser.name || '?').split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase(); %>
+          <%
+            var _avatarEl = '<span class="nav-avatar">';
+            if (currentUser.avatar) {
+              _avatarEl += '<img src="/uploads/avatars/' + currentUser.avatar + '" alt="">';
+            } else {
+              _avatarEl += _navInitials;
+            }
+            _avatarEl += '</span>';
+          %>
+          <% if (currentUser.role === 'seeker') { %>
+            <a href="/seeker/dashboard">My applications</a>
+            <a href="/profile" class="nav-profile">
+              <%- _avatarEl %>
+              <span class="nav-profile-name"><%= currentUser.name %></span>
+            </a>
+            <form class="inline-form" method="POST" action="/logout"><button class="btn small secondary" type="submit">Log out</button></form>
+          <% } else if (currentUser.role === 'employer') { %>
+            <a href="/employer/dashboard" class="btn small">My portal</a>
+            <form class="inline-form" method="POST" action="/logout"><button class="btn small secondary" type="submit">Log out</button></form>
+          <% } else if (currentUser.role === 'admin') { %>
+            <a href="/admin/dashboard" class="btn small">Admin panel</a>
+            <form class="inline-form" method="POST" action="/logout"><button class="btn small secondary" type="submit">Log out</button></form>
+          <% } %>  <%# end role if %>
+        <% } %>  <%# end else (logged-in) %>
+      </nav>
+    </div>
+  </header>
+  <div class="nav-overlay" id="navOverlay"></div>
+  <script>
+    (function () {
+      var toggle  = document.getElementById('navToggle');
+      var links   = document.getElementById('navLinks');
+      var overlay = document.getElementById('navOverlay');
+
+      // Active link highlighting
+      var _path = window.location.pathname;
+      document.querySelectorAll('.nav-links a[data-path]').forEach(function (el) {
+        var p = el.dataset.path;
+        if (_path === p || (p !== '/' && _path.startsWith(p))) el.classList.add('active');
+      });
+      function close() { links.classList.remove('open'); overlay.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); toggle.classList.remove('open'); }
+      function open()  { links.classList.add('open'); overlay.classList.add('open'); toggle.setAttribute('aria-expanded', 'true'); toggle.classList.add('open'); }
+      toggle.addEventListener('click', function () { links.classList.contains('open') ? close() : open(); });
+      overlay.addEventListener('click', close);
+    }());
+  </script>
+  <main class="container">

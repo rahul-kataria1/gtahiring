@@ -1,0 +1,292 @@
+<%- include('../partials/header') %>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Lato&family=Merriweather&family=Playfair+Display&family=Montserrat&family=Raleway&family=Nunito&family=Pacifico&family=Dancing+Script&display=swap" rel="stylesheet">
+  <style>
+    /* ── Hero ─────────────────────────────────────── */
+    .job-hero {
+      background: linear-gradient(135deg, #001f5b 0%, #0057d8 55%, #4a9af5 100%);
+      border-radius: 20px;
+      padding: 36px 40px;
+      margin-bottom: 28px;
+      color: #fff;
+    }
+    .job-hero h1 { color: #fff; margin-bottom: 8px; font-size: 1.9rem; }
+    .job-hero-company { font-size: 1rem; color: rgba(255,255,255,0.8); margin: 0 0 18px; font-weight: 500; }
+    .job-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .job-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 13px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+      background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.25);
+    }
+    .pill-salary { background: rgba(253,203,110,0.25); color: #ffe599; border-color: rgba(253,203,110,0.4); }
+    .pill-closed { background: rgba(239,68,68,0.25); color: #fca5a5; border-color: rgba(239,68,68,0.4); }
+
+    /* ── Two-column layout ────────────────────────── */
+    .job-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .job-layout { grid-template-columns: 1fr; }
+      .job-sidebar { order: -1; }
+    }
+
+    /* ── Sidebar sticky ───────────────────────────── */
+    .job-sidebar { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── Panel card ───────────────────────────────── */
+    .panel-card {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+    .panel-card-header {
+      background: linear-gradient(90deg, var(--violet-bg) 0%, #fff 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 22px; display: flex; align-items: center; gap: 10px;
+    }
+    .panel-card-header::before {
+      content: ''; display: inline-block; width: 4px; height: 18px;
+      background: var(--violet); border-radius: 4px; flex-shrink: 0;
+    }
+    .panel-card-header h2 { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--violet-dark); }
+    .panel-card-body { padding: 20px 22px; }
+
+    /* ── Job detail rows ──────────────────────────── */
+    .detail-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--border-light);
+    }
+    .detail-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .detail-row:first-child { padding-top: 0; }
+    .detail-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--violet-bg); display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .detail-icon svg { width: 15px; height: 15px; color: var(--violet); }
+    .detail-label { font-size: 0.74rem; color: var(--muted); font-weight: 500; margin-bottom: 2px; }
+    .detail-value { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+
+    /* ── Quill render ─────────────────────────────── */
+    .job-description { line-height: 1.8; font-size: 0.96rem; color: var(--text); }
+    .job-description img { max-width: 100%; border-radius: 8px; margin: 1rem 0; }
+    .job-description h1, .job-description h2, .job-description h3 { margin: 1.5rem 0 0.5rem; color: var(--text); }
+    .job-description ul, .job-description ol { padding-left: 1.6rem; margin: 0.7rem 0; }
+    .job-description li { margin-bottom: 4px; }
+    .job-description blockquote { border-left: 4px solid var(--violet-light); padding: 0.5rem 1.2rem; color: var(--muted); margin: 1rem 0; background: var(--violet-bg); border-radius: 0 8px 8px 0; }
+    .job-description a { color: var(--violet); }
+    .job-description p { margin-bottom: 0.85rem; }
+    .ql-align-center  { text-align: center; }
+    .ql-align-right   { text-align: right; }
+    .ql-align-justify { text-align: justify; }
+    .ql-size-small  { font-size: 0.8em; }
+    .ql-size-large  { font-size: 1.35em; }
+    .ql-size-huge   { font-size: 1.75em; }
+    .ql-font-georgia      { font-family: Georgia, serif; }
+    .ql-font-courier      { font-family: 'Courier New', monospace; }
+    .ql-font-trebuchet    { font-family: 'Trebuchet MS', sans-serif; }
+    .ql-font-roboto       { font-family: 'Roboto', sans-serif; }
+    .ql-font-opensans     { font-family: 'Open Sans', sans-serif; }
+    .ql-font-lato         { font-family: 'Lato', sans-serif; }
+    .ql-font-merriweather { font-family: 'Merriweather', serif; }
+    .ql-font-playfair     { font-family: 'Playfair Display', serif; }
+    .ql-font-montserrat   { font-family: 'Montserrat', sans-serif; }
+    .ql-font-raleway      { font-family: 'Raleway', sans-serif; }
+    .ql-font-nunito       { font-family: 'Nunito', sans-serif; }
+    .ql-font-pacifico     { font-family: 'Pacifico', cursive; }
+    .ql-font-dancing      { font-family: 'Dancing Script', cursive; }
+
+    /* ── Apply card inner ─────────────────────────── */
+    .apply-gate { display: flex; flex-direction: column; gap: 8px; }
+    .apply-gate-icon { font-size: 1.8rem; line-height: 1; }
+    .apply-gate h3 { margin: 0 0 4px; font-size: 0.97rem; }
+    .apply-gate p  { margin: 0 0 14px; color: var(--muted); font-size: 0.86rem; line-height: 1.5; }
+    .resume-upload-area {
+      position: relative; border: 2px dashed var(--violet-light);
+      border-radius: 12px; background: var(--violet-bg);
+      padding: 28px 16px; text-align: center; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s; margin-bottom: 14px;
+    }
+    .resume-upload-area:hover, .resume-upload-area.dragover {
+      border-color: var(--violet); background: var(--violet-bg2);
+    }
+    .resume-upload-area input[type=file] {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; cursor: pointer; z-index: 2;
+    }
+    .resume-upload-label { display: flex; flex-direction: column; align-items: center; gap: 5px; pointer-events: none; }
+    .resume-upload-icon  { font-size: 2rem; line-height: 1; }
+    .resume-upload-text  { font-size: 0.88rem; color: var(--text); }
+    .resume-upload-hint  { font-size: 0.76rem; color: var(--muted); }
+    .resume-file-chosen  {
+      margin-top: 8px; display: inline-flex; align-items: center; gap: 6px;
+      background: #fff; border: 1px solid var(--border); border-radius: 8px;
+      padding: 6px 12px; font-size: 0.82rem; font-weight: 600;
+      color: var(--violet-dark); pointer-events: none;
+    }
+  </style>
+
+  <!-- Breadcrumb -->
+  <nav style="display:flex;align-items:center;gap:6px;font-size:0.84rem;margin-bottom:18px;color:var(--muted);">
+    <a href="/" style="display:inline-flex;align-items:center;gap:5px;color:var(--violet);font-weight:600;text-decoration:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      All jobs
+    </a>
+    <span style="color:var(--border);">/</span>
+    <span style="color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px;"><%= job.title %></span>
+  </nav>
+
+  <!-- Hero — full width -->
+  <div class="job-hero">
+    <h1><%= job.title %></h1>
+    <p class="job-hero-company"><%= job.company %></p>
+    <div class="job-pills">
+      <span class="job-pill">📍 <%= job.location %></span>
+      <span class="job-pill"><%= job.job_type %></span>
+      <% if (job.salary) { %><span class="job-pill pill-salary">💰 <%= job.salary %></span><% } %>
+      <% if (job.active === 0) { %><span class="job-pill pill-closed">🔒 Applications closed</span><% } %>
+    </div>
+  </div>
+
+  <!-- Two-column body -->
+  <div class="job-layout">
+
+    <!-- Left: description -->
+    <div>
+      <div class="panel-card">
+        <div class="panel-card-header"><h2>Job description</h2></div>
+        <div class="panel-card-body">
+          <div class="job-description ql-editor" style="padding:0;"><%- job.description %></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: sidebar -->
+    <aside class="job-sidebar">
+
+      <!-- Job overview -->
+      <div class="panel-card">
+        <div class="panel-card-header"><h2>Job overview</h2></div>
+        <div class="panel-card-body">
+
+          <div class="detail-row">
+            <div class="detail-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+            </div>
+            <div>
+              <div class="detail-label">Company</div>
+              <div class="detail-value"><%= job.company %></div>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            </div>
+            <div>
+              <div class="detail-label">Location</div>
+              <div class="detail-value"><%= job.location %></div>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <div class="detail-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.51 15.86 1 13.5 1c-1.28 0-2.44.5-3.3 1.32L9 3.5l-1.2-1.18C6.94 1.5 5.78 1 4.5 1 2.14 1 0 2.51 0 4.64c0 .48.11.92.18 1.36H0v2h20V6zM2 9v11h7v-5h2v5h7V9H2z"/></svg>
+            </div>
+            <div>
+              <div class="detail-label">Job type</div>
+              <div class="detail-value"><%= job.job_type %></div>
+            </div>
+          </div>
+
+          <% if (job.salary) { %>
+          <div class="detail-row">
+            <div class="detail-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+            </div>
+            <div>
+              <div class="detail-label">Salary</div>
+              <div class="detail-value"><%= job.salary %></div>
+            </div>
+          </div>
+          <% } %>
+
+          <div class="detail-row">
+            <div class="detail-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+            </div>
+            <div>
+              <div class="detail-label">Posted</div>
+              <div class="detail-value"><time data-timeago="<%= job.created_at %>" title="<%= new Date(job.created_at).toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric' }) %>"></time></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Apply card -->
+      <div class="panel-card">
+        <div class="panel-card-header">
+          <h2><% if (job.active === 0) { %>Applications closed<% } else { %>Apply for this position<% } %></h2>
+        </div>
+        <div class="panel-card-body">
+
+          <% if (job.active === 0) { %>
+            <div class="apply-gate">
+              <div class="apply-gate-icon">🔒</div>
+              <h3>No longer accepting applications</h3>
+              <p>The employer has closed this position. Explore other open roles below.</p>
+              <a class="btn outline" href="/">Browse open jobs</a>
+            </div>
+
+          <% } else if (!currentUser) { %>
+            <div class="apply-gate">
+              <div class="apply-gate-icon">👤</div>
+              <h3>Create a free account to apply</h3>
+              <p>Sign up as a job seeker to submit your application and track its status.</p>
+              <a class="btn" href="/register" style="text-align:center;">Create seeker account</a>
+              <a class="btn outline" href="/login" style="text-align:center;">Log in</a>
+            </div>
+
+          <% } else if (currentUser.role === 'seeker') { %>
+            <% if (alreadyApplied || justApplied) { %>
+              <div class="apply-gate">
+                <div class="apply-gate-icon">✅</div>
+                <h3>Application submitted!</h3>
+                <p>You've already applied. The employer will review it and update the status.</p>
+                <a class="btn outline" href="/seeker/dashboard">View my applications</a>
+              </div>
+            <% } else { %>
+              <div class="apply-gate">
+                <div class="apply-gate-icon">📋</div>
+                <h3>Ready to apply?</h3>
+                <p>Click below to fill out your application and upload your resume.</p>
+                <a class="btn" href="/jobs/<%= job.id %>/apply" style="text-align:center;">Apply now →</a>
+              </div>
+            <% } %>
+
+          <% } else if (currentUser.role === 'employer') { %>
+            <div class="apply-gate">
+              <div class="apply-gate-icon">🏢</div>
+              <h3>You're logged in as an employer</h3>
+              <p>Only job seekers can apply. Register a separate seeker account if needed.</p>
+              <a class="btn outline" href="/employer/dashboard">Back to my jobs</a>
+            </div>
+
+          <% } else { %>
+            <div class="apply-gate">
+              <div class="apply-gate-icon">🔒</div>
+              <h3>Admin accounts cannot apply</h3>
+              <p>Log in with a job seeker account to test the apply flow.</p>
+              <a class="btn outline" href="/logout">Switch account</a>
+            </div>
+          <% } %>
+
+        </div>
+      </div>
+
+    </aside>
+  </div>
+
+<%- include('../partials/footer') %>

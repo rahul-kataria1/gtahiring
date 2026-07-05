@@ -1,0 +1,186 @@
+<%- include('../partials/header') %>
+  <style>
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 28px;
+      align-items: start;
+      margin-top: 16px;
+    }
+    @media (max-width: 720px) {
+      .contact-layout { grid-template-columns: 1fr; }
+      .contact-sidebar { order: -1; }
+    }
+
+    .contact-hero {
+      background: linear-gradient(135deg, #001f5b 0%, #0057d8 55%, #4a9af5 100%);
+      border-radius: 20px; padding: 44px 40px; margin: 16px 0 36px; color: #fff;
+      position: relative; overflow: hidden;
+    }
+    .contact-hero::before {
+      content: ''; position: absolute; right: -60px; top: -60px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .contact-hero h1 { color: #fff; margin: 0 0 6px; font-size: 2rem; position: relative; z-index: 1; }
+    .contact-hero p  { color: rgba(255,255,255,0.72); margin: 0; position: relative; z-index: 1; }
+
+    .contact-form-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 18px; overflow: hidden;
+    }
+    .contact-form-head {
+      padding: 20px 28px 16px; border-bottom: 1px solid var(--border-light);
+    }
+    .contact-form-head h2 { margin: 0 0 2px; font-size: 1.1rem; }
+    .contact-form-head p  { margin: 0; font-size: 0.85rem; color: var(--muted); }
+    .contact-form-body { padding: 24px 28px; }
+
+    .contact-success {
+      text-align: center; padding: 48px 28px;
+    }
+    .contact-success-icon {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--success-bg); display: flex; align-items: center;
+      justify-content: center; margin: 0 auto 18px;
+    }
+    .contact-success-icon svg { width: 30px; height: 30px; color: var(--success); }
+    .contact-success h2 { font-size: 1.2rem; margin: 0 0 8px; }
+    .contact-success p  { color: var(--muted); font-size: 0.9rem; margin: 0; }
+
+    .info-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden; margin-bottom: 16px;
+    }
+    .info-card:last-child { margin-bottom: 0; }
+    .info-card-head {
+      background: var(--violet-bg); border-bottom: 1px solid var(--border-light);
+      padding: 14px 20px; font-size: 0.78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet-dark);
+    }
+    .info-card-body { padding: 16px 20px; }
+    .info-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--border-light);
+      font-size: 0.87rem;
+    }
+    .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .info-row svg { width: 16px; height: 16px; color: var(--violet); flex-shrink: 0; margin-top: 2px; }
+    .info-row-text strong { display: block; color: var(--text); font-weight: 600; margin-bottom: 1px; }
+    .info-row-text span  { color: var(--muted); }
+  </style>
+
+  <div class="contact-hero">
+    <h1><%= page.title %></h1>
+    <p><%- page.content %></p>
+  </div>
+
+  <div class="contact-layout">
+
+    <div class="contact-form-card">
+      <% if (sent) { %>
+        <div class="contact-success">
+          <div class="contact-success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <h2>Message received!</h2>
+          <p>Thanks for reaching out. We typically respond <%= meta.response_time || 'within 1–2 business days' %>.</p>
+          <a href="/" class="btn" style="margin-top:20px;display:inline-flex;">← Back to jobs</a>
+        </div>
+      <% } else { %>
+        <div class="contact-form-head">
+          <h2>Send us a message</h2>
+          <p>We'll get back to you as soon as possible.</p>
+        </div>
+        <div class="contact-form-body">
+          <% if (error) { %>
+            <div class="alert error" style="margin-bottom:18px;"><%= error %></div>
+          <% } %>
+          <form method="POST" action="/contact">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="field">
+                <label for="name">Your name <span style="color:#ef4444;">*</span></label>
+                <input id="name" name="name" type="text" placeholder="Jane Smith" required>
+              </div>
+              <div class="field">
+                <label for="email">Email address <span style="color:#ef4444;">*</span></label>
+                <input id="email" name="email" type="email" placeholder="jane@example.com" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="subject">Subject <span style="color:#ef4444;">*</span></label>
+              <select id="subject" name="subject" required>
+                <option value="" disabled selected>Select a topic…</option>
+                <option>General inquiry</option>
+                <option>Job posting issue</option>
+                <option>Account problem</option>
+                <option>Report a listing</option>
+                <option>Partnership or advertising</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="message">Message <span style="color:#ef4444;">*</span></label>
+              <textarea id="message" name="message" rows="5" placeholder="Tell us how we can help…" required style="resize:vertical;"></textarea>
+            </div>
+            <button class="btn" type="submit" style="width:100%;justify-content:center;">Send message →</button>
+          </form>
+        </div>
+      <% } %>
+    </div>
+
+    <aside class="contact-sidebar">
+      <div class="info-card">
+        <div class="info-card-head">Get in touch</div>
+        <div class="info-card-body">
+          <% if (meta.email) { %>
+          <div class="info-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <div class="info-row-text">
+              <strong>Email</strong>
+              <span><%= meta.email %></span>
+            </div>
+          </div>
+          <% } %>
+          <% if (meta.location) { %>
+          <div class="info-row">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <div class="info-row-text">
+              <strong>Location</strong>
+              <span><%= meta.location %></span>
+            </div>
+          </div>
+          <% } %>
+          <% if (meta.response_time) { %>
+          <div class="info-row">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/></svg>
+            <div class="info-row-text">
+              <strong>Response time</strong>
+              <span><%= meta.response_time %></span>
+            </div>
+          </div>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-head">Quick links</div>
+        <div class="info-card-body">
+          <div class="info-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <div class="info-row-text"><a href="/">Browse jobs</a></div>
+          </div>
+          <div class="info-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div class="info-row-text"><a href="/privacy">Privacy Policy</a></div>
+          </div>
+          <div class="info-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <div class="info-row-text"><a href="/terms">Terms &amp; Conditions</a></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+<%- include('../partials/footer') %>

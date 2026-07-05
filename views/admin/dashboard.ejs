@@ -1,0 +1,402 @@
+<%- include('../partials/admin-header') %>
+<style>
+  /* ── Hero ─────────────────────────────────────────────────────── */
+  .dash-hero {
+    background: linear-gradient(135deg, #001f5b 0%, #0057d8 60%, #4a9af5 100%);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 22px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: hidden;
+  }
+  .dash-hero::after {
+    content: '';
+    position: absolute;
+    right: -60px; bottom: -60px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .dash-hero h1 { color: #fff; margin: 0 0 2px; font-size: 1.45rem; }
+  .dash-hero p  { color: rgba(255,255,255,0.72); margin: 0; font-size: 0.86rem; }
+  .dash-hero-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-hero {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.18);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    color: #fff; border-radius: 9px;
+    padding: 7px 14px; font-size: 0.8rem; font-weight: 600;
+    text-decoration: none; cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+    white-space: nowrap; font-family: inherit;
+  }
+  .btn-hero:hover { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.6); text-decoration: none; color: #fff; }
+  .btn-hero.solid { background: #fff; color: var(--violet); border-color: #fff; }
+  .btn-hero.solid:hover { background: #e8f2ff; color: var(--violet-dark); }
+
+  /* ── Alert banner ─────────────────────────────────────────────── */
+  .dash-alert {
+    background: #fff8e1; border: 1.5px solid #fde68a;
+    border-radius: 10px; padding: 11px 16px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 18px; font-size: 0.86rem; color: #7a4f00;
+  }
+  .dash-alert svg { flex-shrink: 0; color: #c47800; }
+  .dash-alert a { color: #0057d8; font-weight: 600; }
+
+  /* ── Stat cards ───────────────────────────────────────────────── */
+  .stats-grid-new {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  @media (max-width: 1100px) { .stats-grid-new { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 700px)  { .stats-grid-new { grid-template-columns: repeat(2, 1fr); } }
+  .sc {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative; overflow: hidden; min-width: 0;
+  }
+  .sc:hover { box-shadow: 0 4px 18px rgba(0,87,216,0.1); transform: translateY(-2px); }
+  .sc-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .sc-icon svg { width: 16px; height: 16px; }
+  .ic-blue   { background: #dbeafe; color: #1d4ed8; }
+  .ic-green  { background: #d1fae5; color: #065f46; }
+  .ic-amber  { background: #fef3c7; color: #92400e; }
+  .ic-red    { background: #fee2e2; color: #991b1b; }
+  .ic-indigo { background: #e0e7ff; color: #3730a3; }
+  .ic-teal   { background: #ccfbf1; color: #0f766e; }
+  .ic-rose   { background: #ffe4e6; color: #9f1239; }
+  .ic-violet { background: #ede9fe; color: #5b21b6; }
+  .sc-num {
+    font-size: 1.75rem; font-weight: 900; line-height: 1;
+    color: var(--text); letter-spacing: -0.03em;
+  }
+  .sc-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
+  .sc-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 14px 14px 0 0; }
+  .ac-blue   { background: #3b82f6; }
+  .ac-green  { background: #10b981; }
+  .ac-amber  { background: #f59e0b; }
+  .ac-red    { background: #ef4444; }
+  .ac-indigo { background: #6366f1; }
+  .ac-teal   { background: #14b8a6; }
+  .ac-rose   { background: #f43f5e; }
+  .ac-violet { background: #7c3aed; }
+
+  /* ── Section header ───────────────────────────────────────────── */
+  .sec-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .sec-head h2 { margin: 0; font-size: 1rem; font-weight: 700; }
+  .sec-head a  { font-size: 0.82rem; color: var(--violet); font-weight: 600; }
+  .sec-head a:hover { text-decoration: underline; }
+
+  /* ── Two-col layout ───────────────────────────────────────────── */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  @media (max-width: 780px) { .dash-grid { grid-template-columns: 1fr; } }
+
+  /* ── Panel card ───────────────────────────────────────────────── */
+  .panel {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 18px; min-width: 0;
+  }
+
+  /* ── Activity rows ────────────────────────────────────────────── */
+  .act-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid var(--border-light);
+  }
+  .act-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .act-avatar {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .act-body { flex: 1; min-width: 0; }
+  .act-title {
+    font-size: 0.88rem; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 2px;
+  }
+  .act-sub { font-size: 0.77rem; color: var(--muted); }
+  .act-right { flex-shrink: 0; text-align: right; }
+  .act-date { font-size: 0.74rem; color: var(--muted); white-space: nowrap; }
+
+  /* ── Status badges ────────────────────────────────────────────── */
+  .tag {
+    display: inline-block; padding: 2px 9px; border-radius: 20px;
+    font-size: 0.7rem; font-weight: 700; text-transform: capitalize; letter-spacing: 0.02em;
+  }
+  .tag-pending  { background: #fef3c7; color: #92400e; }
+  .tag-approved { background: #d1fae5; color: #065f46; }
+  .tag-rejected { background: #fee2e2; color: #991b1b; }
+  .tag-applied  { background: #dbeafe; color: #1e40af; }
+  .tag-reviewed { background: #ede9fe; color: #5b21b6; }
+  .tag-accepted { background: #d1fae5; color: #065f46; }
+  .tag-seeker   { background: #e0f2fe; color: #0369a1; }
+  .tag-employer { background: #fce7f3; color: #9d174d; }
+  .tag-active   { background: #d1fae5; color: #065f46; }
+  .tag-blocked  { background: #fee2e2; color: #991b1b; }
+  .tag-draft    { background: #f3f4f6; color: #374151; }
+  .tag-pub      { background: #d1fae5; color: #065f46; }
+
+  /* ── Color pairs for avatars ──────────────────────────────────── */
+  .av0 { background: linear-gradient(135deg, #0057d8, #4a9af5); }
+  .av1 { background: linear-gradient(135deg, #00b894, #00cec9); }
+  .av2 { background: linear-gradient(135deg, #e17055, #fab1a0); }
+  .av3 { background: linear-gradient(135deg, #6366f1, #a5b4fc); }
+  .av4 { background: linear-gradient(135deg, #f43f5e, #fb7185); }
+  .av5 { background: linear-gradient(135deg, #f59e0b, #fcd34d); }
+  .av6 { background: linear-gradient(135deg, #14b8a6, #5eead4); }
+  .av7 { background: linear-gradient(135deg, #7c3aed, #c4b5fd); }
+</style>
+
+<!-- Hero -->
+<div class="dash-hero">
+  <div>
+    <h1>Admin overview</h1>
+    <p>Platform snapshot &mdash; <%= new Date().toLocaleDateString('en-CA', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) %></p>
+  </div>
+  <div class="dash-hero-actions">
+    <% if (stats.pendingJobs > 0) { %>
+      <a class="btn-hero solid" href="/admin/jobs?status=pending">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <%= stats.pendingJobs %> pending job<%= stats.pendingJobs !== 1 ? 's' : '' %>
+      </a>
+    <% } %>
+    <a class="btn-hero" href="/admin/users">Manage users</a>
+    <a class="btn-hero" href="/admin/blog/new">New post</a>
+  </div>
+</div>
+
+<% if (stats.pendingJobs > 0) { %>
+<div class="dash-alert">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  <span><strong><%= stats.pendingJobs %> job posting<%= stats.pendingJobs !== 1 ? 's' : '' %></strong> waiting for review. <a href="/admin/jobs?status=pending">Review now &rarr;</a></span>
+</div>
+<% } %>
+
+<!-- Stat cards -->
+<div class="stats-grid-new">
+  <div class="sc">
+    <div class="sc-accent ac-blue"></div>
+    <div class="sc-icon ic-blue">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    </div>
+    <div class="sc-num"><%= stats.jobSeekers %></div>
+    <div class="sc-label">Job seekers</div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-accent ac-violet"></div>
+    <div class="sc-icon ic-violet">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+    </div>
+    <div class="sc-num"><%= stats.employers %></div>
+    <div class="sc-label">Employers</div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-accent ac-green"></div>
+    <div class="sc-icon ic-green">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.51 15.86 1 13.5 1c-1.28 0-2.44.5-3.3 1.32L9 3.5 7.8 2.32C6.94 1.5 5.78 1 4.5 1 2.14 1 0 2.51 0 4.64c0 .48.11.92.18 1.36H0v2h20V6zM2.18 6C2.08 5.7 2 5.34 2 4.64 2 3.62 3.12 3 4.5 3c.76 0 1.47.3 2.01.8L8 5.34 9.49 3.8C10.03 3.3 10.74 3 11.5 3c1.36 0 2.5.62 2.5 1.64 0 .7-.08 1.06-.18 1.36H2.18zM2 9v11h7v-5h2v5h7V9H2z"/></svg>
+    </div>
+    <div class="sc-num"><%= stats.approvedJobs %></div>
+    <div class="sc-label">Live jobs</div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-accent ac-amber"></div>
+    <div class="sc-icon ic-amber">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+    </div>
+    <div class="sc-num"><%= stats.pendingJobs %></div>
+    <div class="sc-label">Pending review</div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-accent ac-teal"></div>
+    <div class="sc-icon ic-teal">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-2 9l-3-3 1.41-1.41L10 15.17l4.59-4.58L16 12l-5 5z"/></svg>
+    </div>
+    <div class="sc-num"><%= stats.totalApplications %></div>
+    <div class="sc-label">Applications</div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-accent ac-green"></div>
+    <div class="sc-icon ic-green">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+    </div>
+    <div class="sc-num"><%= stats.acceptedApps %></div>
+    <div class="sc-label">Accepted</div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-accent ac-indigo"></div>
+    <div class="sc-icon ic-indigo">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    </div>
+    <div class="sc-num"><%= stats.publishedPosts %></div>
+    <div class="sc-label">Published posts</div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-accent ac-red"></div>
+    <div class="sc-icon ic-red">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm0 4a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm3 13H9v-2h2.5v-5H10v-2h4v7H16v2z"/></svg>
+    </div>
+    <div class="sc-num"><%= stats.blockedUsers %></div>
+    <div class="sc-label">Blocked users</div>
+  </div>
+</div>
+
+<!-- Two-column panels -->
+<div class="dash-grid">
+
+  <!-- Recent jobs -->
+  <div class="panel">
+    <div class="sec-head">
+      <h2>Recent jobs</h2>
+      <a href="/admin/jobs">View all &rarr;</a>
+    </div>
+    <% if (recentJobs.length === 0) { %>
+      <p style="color:var(--muted);font-size:0.88rem;">No jobs yet.</p>
+    <% } else { %>
+      <% recentJobs.forEach(function(job) {
+        var initials = job.company.trim().split(/\s+/).map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase() || '?';
+        var colorIdx = job.company.toUpperCase().charCodeAt(0) % 8;
+      %>
+        <div class="act-row">
+          <div class="act-avatar av<%= colorIdx %>"><%= initials %></div>
+          <div class="act-body">
+            <div class="act-title"><a href="/jobs/<%= job.id %>" style="color:inherit;" target="_blank"><%= job.title %></a></div>
+            <div class="act-sub"><%= job.company %> &middot; by <%= job.employer_name %></div>
+          </div>
+          <div class="act-right">
+            <div class="act-date"><time data-timeago="<%= job.created_at %>"></time></div>
+            <div style="margin-top:4px;"><span class="tag tag-<%= job.status %>"><%= job.status %></span></div>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+  </div>
+
+  <!-- Recent applications -->
+  <div class="panel">
+    <div class="sec-head">
+      <h2>Recent applications</h2>
+      <a href="/admin/jobs">View jobs &rarr;</a>
+    </div>
+    <% if (recentApplications.length === 0) { %>
+      <p style="color:var(--muted);font-size:0.88rem;">No applications yet.</p>
+    <% } else { %>
+      <% recentApplications.forEach(function(app) {
+        var initials = app.seeker_name.trim().split(/\s+/).map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase() || '?';
+        var colorIdx = app.seeker_name.toUpperCase().charCodeAt(0) % 8;
+      %>
+        <div class="act-row">
+          <div class="act-avatar av<%= colorIdx %>"><%= initials %></div>
+          <div class="act-body">
+            <div class="act-title"><%= app.seeker_name %></div>
+            <div class="act-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">applied to <em><%= app.job_title %></em></div>
+          </div>
+          <div class="act-right">
+            <div class="act-date"><time data-timeago="<%= app.created_at %>"></time></div>
+            <div style="margin-top:4px;"><span class="tag tag-<%= app.status %>"><%= app.status %></span></div>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+  </div>
+</div>
+
+<div class="dash-grid">
+
+  <!-- Recent users -->
+  <div class="panel">
+    <div class="sec-head">
+      <h2>Recent users</h2>
+      <a href="/admin/users">View all &rarr;</a>
+    </div>
+    <% if (recentUsers.length === 0) { %>
+      <p style="color:var(--muted);font-size:0.88rem;">No users yet.</p>
+    <% } else { %>
+      <% recentUsers.forEach(function(user) {
+        var initials = user.name.trim().split(/\s+/).map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase() || '?';
+        var colorIdx = user.name.toUpperCase().charCodeAt(0) % 8;
+      %>
+        <div class="act-row">
+          <div class="act-avatar av<%= colorIdx %>"><%= initials %></div>
+          <div class="act-body">
+            <div class="act-title"><%= user.name %></div>
+            <div class="act-sub"><%= user.email %></div>
+          </div>
+          <div class="act-right">
+            <div class="act-date"><time data-timeago="<%= user.created_at %>"></time></div>
+            <div style="margin-top:4px;">
+              <span class="tag tag-<%= user.role %>"><%= user.role %></span>
+              <% if (user.status === 'blocked') { %><span class="tag tag-blocked" style="margin-left:3px;">blocked</span><% } %>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+  </div>
+
+  <!-- Recent blog posts -->
+  <div class="panel">
+    <div class="sec-head">
+      <h2>Blog posts</h2>
+      <a href="/admin/blog">View all &rarr;</a>
+    </div>
+    <% if (recentPosts.length === 0) { %>
+      <p style="color:var(--muted);font-size:0.88rem;">No posts yet. <a href="/admin/blog/new">Write one.</a></p>
+    <% } else { %>
+      <% recentPosts.forEach(function(post) {
+      %>
+        <div class="act-row">
+          <% if (post.featured_image) { %>
+            <img src="/uploads/blog/<%= post.featured_image %>" alt=""
+              style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border);">
+          <% } else { %>
+            <div class="act-avatar" style="background:linear-gradient(135deg,#6366f1,#a5b4fc);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            </div>
+          <% } %>
+          <div class="act-body">
+            <div class="act-title"><a href="/blog/<%= post.slug %>" style="color:inherit;" target="_blank"><%= post.title %></a></div>
+            <div class="act-sub">by <%= post.author_name %></div>
+          </div>
+          <div class="act-right">
+            <div class="act-date"><time data-timeago="<%= post.created_at %>"></time></div>
+            <div style="margin-top:4px;"><span class="tag <%= post.published ? 'tag-pub' : 'tag-draft' %>"><%= post.published ? 'Published' : 'Draft' %></span></div>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+    <div style="margin-top:14px;">
+      <a class="btn small outline" href="/admin/blog/new">+ New post</a>
+    </div>
+  </div>
+
+</div>
+<%- include('../partials/admin-footer') %>

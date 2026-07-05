@@ -1,0 +1,44 @@
+<%- include('../partials/employer-header') %>
+  <h1>Post a job</h1>
+  <p class="subtitle">Your job will be visible to seekers once the admin approves it.</p>
+
+  <% if (error) { %><div class="alert error"><%= error %></div><% } %>
+
+  <form class="stacked" id="new-job-form" method="POST" action="/employer/jobs/new">
+    <div class="field">
+      <label for="title">Job title</label>
+      <input type="text" id="title" name="title" value="<%= form.title || '' %>" required>
+    </div>
+    <div class="field">
+      <label for="company">Company name</label>
+      <input type="text" id="company" name="company" value="<%= form.company || currentUser.name %>" required>
+    </div>
+    <div class="field">
+      <label for="location">Location</label>
+      <input type="text" id="location" name="location" value="<%= form.location || '' %>" placeholder="e.g. Toronto, ON or Remote" required>
+    </div>
+    <div class="field">
+      <label for="job_type">Job type</label>
+      <select id="job_type" name="job_type">
+        <option value="Full-time">Full-time</option>
+        <option value="Part-time">Part-time</option>
+        <option value="Contract">Contract</option>
+        <option value="Internship">Internship</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="salary">Salary (optional)</label>
+      <input type="text" id="salary" name="salary" value="<%= form.salary || '' %>" placeholder="e.g. $70,000 - $90,000/year">
+    </div>
+    <div class="field">
+      <label>Job description</label>
+      <%- include('../partials/quill-editor', {
+        fieldName:   'description',
+        formId:      'new-job-form',
+        initialHtml: form.description || '',
+        minHeight:   '300px'
+      }) %>
+    </div>
+    <button class="btn" type="submit">Submit for review</button>
+  </form>
+<%- include('../partials/employer-footer') %>

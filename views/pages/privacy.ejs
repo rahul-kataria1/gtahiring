@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+  <style>
+    .policy-hero {
+      background: linear-gradient(135deg, #001f5b 0%, #0057d8 55%, #4a9af5 100%);
+      border-radius: 20px; padding: 44px 40px; margin: 16px 0 36px; color: #fff;
+      position: relative; overflow: hidden;
+    }
+    .policy-hero::before {
+      content: ''; position: absolute; right: -60px; top: -60px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .policy-hero h1 { color: #fff; margin: 0 0 6px; font-size: 2rem; position: relative; z-index: 1; }
+    .policy-hero p  { color: rgba(255,255,255,0.72); margin: 0; position: relative; z-index: 1; }
+
+    .policy-body { max-width: 720px; }
+    .policy-body h2 {
+      font-size: 1.05rem; font-weight: 700; color: var(--text);
+      margin: 32px 0 10px; padding-top: 32px;
+      border-top: 1px solid var(--border-light);
+    }
+    .policy-body h2:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+    .policy-body p, .policy-body li { color: var(--muted); line-height: 1.8; font-size: 0.93rem; }
+    .policy-body ul { padding-left: 20px; margin: 8px 0 12px; }
+    .policy-body li { margin-bottom: 5px; }
+    .policy-updated {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--violet-bg); color: var(--violet-dark);
+      border: 1px solid var(--violet-light); border-radius: 20px;
+      font-size: 0.78rem; font-weight: 600; padding: 4px 12px; margin-bottom: 28px;
+    }
+  </style>
+
+  <div class="policy-hero">
+    <h1><%= page.title %></h1>
+    <p>How GTA Hiring collects, uses, and protects your personal information.</p>
+  </div>
+
+  <div class="policy-body">
+    <span class="policy-updated">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+      Last updated: <%= new Date(page.updated_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'long' }) %>
+    </span>
+    <%- page.content %>
+  </div>
+<%- include('../partials/footer') %>

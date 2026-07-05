@@ -1,0 +1,158 @@
+<%- include('../partials/employer-header') %>
+  <style>
+    .toggle-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 11px; border-radius: 20px; font-size: 0.76rem;
+      font-weight: 700; border: none; cursor: pointer; font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .toggle-btn:hover { opacity: 0.82; }
+    .toggle-on  { background: #d1fae5; color: #065f46; }
+    .toggle-off { background: #fee2e2; color: #991b1b; }
+    .toggle-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .toggle-on  .toggle-dot { background: #10b981; }
+    .toggle-off .toggle-dot { background: #ef4444; }
+
+    /* Notification banner */
+    .notif-banner {
+      display: flex; align-items: center; gap: 14px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1.5px solid #bfdbfe;
+      border-radius: 14px; padding: 16px 20px; margin-bottom: 24px;
+    }
+    .notif-banner-icon {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: #0057d8; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+    }
+    .notif-banner-icon svg { width: 20px; height: 20px; color: #fff; }
+    .notif-banner-body { flex: 1; }
+    .notif-banner-body strong { font-size: 0.95rem; color: #1e3a8a; display: block; margin-bottom: 2px; }
+    .notif-banner-body span  { font-size: 0.83rem; color: #3b82f6; }
+    .notif-banner a.btn { white-space: nowrap; }
+
+    /* New badge on table */
+    .new-dot {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #0057d8; color: #fff;
+      font-size: 0.68rem; font-weight: 800;
+      padding: 2px 8px; border-radius: 20px;
+      letter-spacing: 0.04em; vertical-align: middle;
+      margin-left: 5px; animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,87,216,0.4); }
+      50%       { box-shadow: 0 0 0 5px rgba(0,87,216,0); }
+    }
+  </style>
+
+  <style>
+    .dash-topbar {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px;
+      flex-wrap: wrap; margin: 12px 0 6px;
+    }
+    .dash-topbar h1 { margin: 0; }
+    .dash-search-wrap { position: relative; }
+    .dash-search-wrap svg {
+      position: absolute; left: 13px; top: 50%;
+      transform: translateY(-50%); color: var(--muted); pointer-events: none;
+    }
+    .dash-search-input {
+      padding: 10px 14px 10px 38px;
+      border: 1.5px solid var(--border); border-radius: 12px;
+      font-size: 0.875rem; font-family: inherit; color: var(--text);
+      background: #fff; width: 280px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .dash-search-input:focus {
+      outline: none; border-color: var(--violet);
+      box-shadow: 0 0 0 3px rgba(0,87,216,0.12);
+    }
+    .dash-search-input::placeholder { color: var(--muted); }
+    .dash-clear {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--border-light); color: var(--muted);
+      text-decoration: none; font-size: 1rem; line-height: 1;
+      transition: background 0.15s, color 0.15s; flex-shrink: 0;
+    }
+    .dash-clear:hover { background: #fee2e2; color: #991b1b; text-decoration: none; }
+    @media (max-width: 560px) {
+      .dash-search-input { width: 100%; }
+      .dash-topbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+
+  <div class="dash-topbar">
+    <h1>My job postings</h1>
+    <form method="GET" action="/employer/dashboard" style="display:flex;align-items:center;gap:8px;">
+      <div class="dash-search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input class="dash-search-input" type="text" name="q" value="<%= q %>" placeholder="Search by title, company, location…" autocomplete="off">
+      </div>
+      <% if (q) { %>
+        <a class="dash-clear" href="/employer/dashboard" title="Clear">&times;</a>
+      <% } %>
+    </form>
+  </div>
+  <p class="subtitle">New jobs are reviewed by the admin before they go live.</p>
+
+  <% if (totalNew > 0) { %>
+    <div class="notif-banner">
+      <div class="notif-banner-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+      </div>
+      <div class="notif-banner-body">
+        <strong>You have <%= totalNew %> new application<%= totalNew !== 1 ? 's' : '' %>!</strong>
+        <span>New applicants are waiting for your review across your job postings.</span>
+      </div>
+    </div>
+  <% } %>
+
+  <a class="btn" href="/employer/jobs/new" style="margin-bottom: 24px; display: inline-block;">+ Post a new job</a>
+
+  <% if (jobs.length === 0) { %>
+    <div class="empty-state">
+      <p><% if (q) { %>No jobs match "<%= q %>". <a href="/employer/dashboard">Clear search</a><% } else { %>You haven't posted any jobs yet.<% } %></p>
+    </div>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr><th>Title</th><th>Status</th><th>Applications</th><th>Applicants</th><th>Posted</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% jobs.forEach(job => { %>
+          <tr>
+            <td><a href="/jobs/<%= job.id %>" style="color:var(--text);font-weight:600;"><%= job.title %></a></td>
+            <td><span class="badge <%= job.status %>"><%= job.status %></span></td>
+            <td>
+              <form class="inline-form" method="POST" action="/employer/jobs/<%= job.id %>/toggle-active">
+                <button type="submit" class="toggle-btn <%= job.active !== 0 ? 'toggle-on' : 'toggle-off' %>">
+                  <span class="toggle-dot"></span>
+                  <%= job.active !== 0 ? 'Open' : 'Closed' %>
+                </button>
+              </form>
+            </td>
+            <td>
+              <a href="/employer/jobs/<%= job.id %>/applicants" style="font-weight:600;">
+                <%= countMap[job.id] || 0 %>
+              </a>
+              <% if (newMap[job.id] > 0) { %>
+                <span class="new-dot"><%= newMap[job.id] %> new</span>
+              <% } %>
+            </td>
+            <td><time data-timeago="<%= job.created_at %>" title="<%= job.created_at.slice(0, 10) %>"></time></td>
+            <td class="actions">
+              <a class="btn small outline" href="/employer/jobs/<%= job.id %>/edit">Edit</a>
+              <form class="inline-form" method="POST" action="/employer/jobs/<%= job.id %>/delete" onsubmit="return confirm('Delete this job posting?');">
+                <button class="btn small danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+<%- include('../partials/employer-footer') %>

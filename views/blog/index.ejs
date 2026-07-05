@@ -1,0 +1,164 @@
+<%- include('../partials/header') %>
+  <style>
+    .blog-card {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .blog-thumb {
+      width: 120px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 10px;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .blog-card-body { flex: 1; min-width: 0; }
+    @media (max-width: 520px) {
+      .blog-card { flex-direction: column; }
+      .blog-thumb { width: 100%; height: 160px; }
+    }
+  </style>
+
+  <style>
+    .blog-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 12px 0 6px;
+    }
+    .blog-topbar h1 { margin: 0; }
+    .blog-search-wrap { position: relative; }
+    .blog-search-wrap svg {
+      position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); pointer-events: none;
+    }
+    .blog-search-input {
+      padding: 10px 14px 10px 38px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-family: inherit;
+      color: var(--text);
+      background: #fff;
+      width: 240px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .blog-search-input:focus {
+      outline: none;
+      border-color: var(--violet);
+      box-shadow: 0 0 0 3px rgba(0,87,216,0.12);
+    }
+    .blog-search-input::placeholder { color: var(--muted); }
+    .blog-clear {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--border-light);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 1rem; line-height: 1;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .blog-clear:hover { background: #fee2e2; color: #991b1b; text-decoration: none; }
+    @media (max-width: 520px) {
+      .blog-search-input { width: 100%; }
+      .blog-topbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+
+  <div class="blog-topbar">
+    <h1>Blog</h1>
+    <form method="GET" action="/blog" style="display:flex;align-items:center;gap:8px;">
+      <div class="blog-search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input class="blog-search-input" type="text" name="q" value="<%= q %>" placeholder="Search posts…" autocomplete="off">
+      </div>
+      <% if (q) { %>
+        <a class="blog-clear" href="/blog" title="Clear search">&times;</a>
+      <% } %>
+    </form>
+  </div>
+  <p class="subtitle">Tips, updates, and insights from the GTA Hiring team.</p>
+
+  <% if (q && posts.length === 0) { %>
+    <div class="empty-state"><p>No posts match "<%= q %>".</p></div>
+  <% } else if (posts.length === 0) { %>
+    <div class="empty-state"><p>No posts yet. Check back soon.</p></div>
+  <% } %>
+  <% if (posts.length > 0) { %>
+    <% posts.forEach(post => { %>
+      <div class="card">
+        <div class="blog-card">
+          <% if (post.featured_image) { %>
+            <a href="/blog/<%= post.slug %>">
+              <img class="blog-thumb" src="/uploads/blog/<%= post.featured_image %>" alt="">
+            </a>
+          <% } %>
+          <div class="blog-card-body">
+            <h2 style="margin-bottom:4px;"><a href="/blog/<%= post.slug %>"><%= post.title %></a></h2>
+            <div class="meta" style="margin-bottom:10px;">
+              <span>By <%= post.author_name %></span>
+              <span><%= post.created_at.slice(0, 10) %></span>
+            </div>
+            <% var excerpt = post.body.replace(/<[^>]*>/g, '').slice(0, 200); %>
+            <p style="margin-bottom:12px;"><%= excerpt %><% if (excerpt.length === 200) { %>…<% } %></p>
+            <a class="btn outline small" href="/blog/<%= post.slug %>">Read more</a>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+
+    <% if (totalPages > 1) { %>
+      <%
+        var pageBase = '/blog?' + (q ? 'q=' + encodeURIComponent(q) + '&' : '') + 'page=';
+        var windowStart = Math.max(1, currentPage - 2);
+        var windowEnd   = Math.min(totalPages, currentPage + 2);
+      %>
+      <nav class="pagination" aria-label="Blog pages">
+        <% if (currentPage > 1) { %>
+          <a class="pagination-btn" href="<%= pageBase %><%= currentPage - 1 %>" aria-label="Previous page">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </a>
+        <% } else { %>
+          <span class="pagination-btn disabled" aria-disabled="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </span>
+        <% } %>
+
+        <% if (windowStart > 1) { %>
+          <a class="pagination-btn" href="<%= pageBase %>1">1</a>
+          <% if (windowStart > 2) { %><span class="pagination-ellipsis">&hellip;</span><% } %>
+        <% } %>
+
+        <% for (var p = windowStart; p <= windowEnd; p++) { %>
+          <% if (p === currentPage) { %>
+            <span class="pagination-btn active" aria-current="page"><%= p %></span>
+          <% } else { %>
+            <a class="pagination-btn" href="<%= pageBase %><%= p %>"><%= p %></a>
+          <% } %>
+        <% } %>
+
+        <% if (windowEnd < totalPages) { %>
+          <% if (windowEnd < totalPages - 1) { %><span class="pagination-ellipsis">&hellip;</span><% } %>
+          <a class="pagination-btn" href="<%= pageBase %><%= totalPages %>"><%= totalPages %></a>
+        <% } %>
+
+        <% if (currentPage < totalPages) { %>
+          <a class="pagination-btn" href="<%= pageBase %><%= currentPage + 1 %>" aria-label="Next page">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        <% } else { %>
+          <span class="pagination-btn disabled" aria-disabled="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        <% } %>
+      </nav>
+      <p class="pagination-count">Page <%= currentPage %> of <%= totalPages %> &mdash; <%= total %> post<%= total !== 1 ? 's' : '' %></p>
+    <% } %>
+  <% } %>
+<%- include('../partials/footer') %>

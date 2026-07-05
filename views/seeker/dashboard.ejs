@@ -1,0 +1,38 @@
+<%- include('../partials/header') %>
+  <h1>My applications</h1>
+
+  <% if (applications.length === 0) { %>
+    <div class="empty-state">
+      <p>You haven't applied to any jobs yet.</p>
+      <a class="btn" href="/">Browse jobs</a>
+    </div>
+  <% } else { %>
+    <% applications.forEach(a => { %>
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div style="padding:18px 22px 14px;">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div>
+              <h3 style="margin:0 0 4px;">
+                <a href="/jobs/<%= a.job_id %>"><%= a.title %></a>
+              </h3>
+              <div class="job-card .meta" style="color:var(--muted); font-size:0.85rem; display:flex; gap:14px; flex-wrap:wrap;">
+                <span>🏢 <%= a.company %></span>
+                <span>📍 <%= a.location %></span>
+                <span>📅 Applied <time data-timeago="<%= a.created_at %>" title="<%= a.created_at.slice(0, 10) %>"></time></span>
+              </div>
+            </div>
+            <span class="badge <%= a.status %>" style="flex-shrink:0; margin-top:2px;"><%= a.status %></span>
+          </div>
+        </div>
+        <% if (a.resume_file) { %>
+          <div style="padding:10px 22px 14px; border-top:1px solid var(--border-light); background:#fdfcff;">
+            <a href="/resume/<%= a.resume_file %>"
+               style="display:inline-flex;align-items:center;gap:6px;font-size:0.82rem;font-weight:600;color:var(--violet-dark);text-decoration:none;">
+              📄 View submitted resume
+            </a>
+          </div>
+        <% } %>
+      </div>
+    <% }) %>
+  <% } %>
+<%- include('../partials/footer') %>

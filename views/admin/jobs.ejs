@@ -1,0 +1,64 @@
+<%- include('../partials/admin-header') %>
+  <style>
+    .toggle-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 11px; border-radius: 20px; font-size: 0.76rem;
+      font-weight: 700; border: none; cursor: pointer; font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .toggle-btn:hover { opacity: 0.82; }
+    .toggle-on  { background: #d1fae5; color: #065f46; }
+    .toggle-off { background: #fee2e2; color: #991b1b; }
+    .toggle-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .toggle-on  .toggle-dot { background: #10b981; }
+    .toggle-off .toggle-dot { background: #ef4444; }
+  </style>
+  <h1>Manage jobs</h1>
+
+  <div class="filter-tabs">
+    <a href="/admin/jobs" class="<%= filter === 'all' ? 'active' : '' %>">All</a>
+    <a href="/admin/jobs?status=pending" class="<%= filter === 'pending' ? 'active' : '' %>">Pending</a>
+    <a href="/admin/jobs?status=approved" class="<%= filter === 'approved' ? 'active' : '' %>">Approved</a>
+    <a href="/admin/jobs?status=rejected" class="<%= filter === 'rejected' ? 'active' : '' %>">Rejected</a>
+  </div>
+
+  <% if (jobs.length === 0) { %>
+    <div class="empty-state"><p>No jobs in this category.</p></div>
+  <% } else { %>
+    <% jobs.forEach(job => { %>
+      <div class="card job-card">
+        <h3><%= job.title %> <span class="badge <%= job.status %>"><%= job.status %></span><% if (!job.active) { %> <span class="badge rejected" style="background:#fee2e2;color:#991b1b;">Applications closed</span><% } %></h3>
+        <div class="meta">
+          <span><%= job.company %></span>
+          <span><%= job.location %></span>
+          <span>Posted by <%= job.employer_name %></span>
+          <span>Posted <time data-timeago="<%= job.created_at %>" title="<%= job.created_at.slice(0, 10) %>"></time></span>
+        </div>
+        <div class="actions">
+          <a class="btn small outline" href="/admin/jobs/<%= job.id %>">Read post</a>
+          <% if (job.status !== 'approved') { %>
+            <form class="inline-form" method="POST" action="/admin/jobs/<%= job.id %>/status">
+              <input type="hidden" name="status" value="approved">
+              <button class="btn small" type="submit">Approve</button>
+            </form>
+          <% } %>
+          <% if (job.status !== 'rejected') { %>
+            <form class="inline-form" method="POST" action="/admin/jobs/<%= job.id %>/status">
+              <input type="hidden" name="status" value="rejected">
+              <button class="btn small secondary" type="submit">Reject</button>
+            </form>
+          <% } %>
+          <form class="inline-form" method="POST" action="/admin/jobs/<%= job.id %>/toggle-active?filter=<%= filter %>">
+            <button type="submit" class="toggle-btn <%= job.active !== 0 ? 'toggle-on' : 'toggle-off' %>">
+              <span class="toggle-dot"></span>
+              <%= job.active !== 0 ? 'Open' : 'Closed' %>
+            </button>
+          </form>
+          <form class="inline-form" method="POST" action="/admin/jobs/<%= job.id %>/delete" onsubmit="return confirm('Delete this job permanently?');">
+            <button class="btn small danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+<%- include('../partials/admin-footer') %>
