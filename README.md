@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # JobBoard
 
 A simple job posting website with three roles:
@@ -63,3 +64,7 @@ This app is a normal Node process — any host that runs Node.js works (a VPS, R
 - This uses Express's default in-memory session store, which is fine for one server process but resets on restart and won't share sessions across multiple instances. For real multi-instance deployments, swap in a store like `connect-sqlite3` or Redis — the app code doesn't need to change beyond the `session()` config in `server.js`.
 - SQLite stores everything in `db/jobboard.db`. Back that file up regularly. If you outgrow SQLite, the SQL in `db/schema.sql` translates directly to MySQL/Postgres with minor type tweaks.
 - Change the default admin password (set in `.env` before seeding) immediately on a real deployment.
+=======
+# gtahiring
+Job Portal
+>>>>>>> 2c880eb408679769d1db75cbbca1a7cc6c320805
