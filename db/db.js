@@ -1,7 +1,8 @@
 const path = require('path');
 const fs = require('fs');
 
-const ABS_PATH = path.join(__dirname, 'jobboard.db');
+// DB_PATH env var lets Railway (or any host) store the file on a persistent volume
+const ABS_PATH = process.env.DB_PATH || path.join(__dirname, 'jobboard.db');
 // node-sqlite3-wasm needs a path relative to process.cwd()
 const REL_PATH = path.relative(process.cwd(), ABS_PATH);
 
