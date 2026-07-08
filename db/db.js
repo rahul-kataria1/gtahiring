@@ -3,6 +3,16 @@ const fs = require('fs');
 
 // DB_PATH env var lets Railway (or any host) store the file on a persistent volume
 const ABS_PATH = process.env.DB_PATH || path.join(__dirname, 'jobboard.db');
+
+// On first deploy, seed the volume with the bundled database so existing data carries over
+if (process.env.DB_PATH && !fs.existsSync(ABS_PATH)) {
+  const bundled = path.join(__dirname, 'jobboard.db');
+  if (fs.existsSync(bundled)) {
+    fs.mkdirSync(path.dirname(ABS_PATH), { recursive: true });
+    fs.copyFileSync(bundled, ABS_PATH);
+  }
+}
+
 // node-sqlite3-wasm needs a path relative to process.cwd()
 const REL_PATH = path.relative(process.cwd(), ABS_PATH);
 
