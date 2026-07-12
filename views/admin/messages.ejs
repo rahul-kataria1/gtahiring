@@ -27,8 +27,47 @@
     <% if (unreadCount > 0) { %> &middot; <strong><%= unreadCount %> unread</strong><% } %>
   </p>
 
+  <form class="search-bar" method="GET" action="/admin/messages">
+    <% if (status !== 'all') { %><input type="hidden" name="status" value="<%= status %>"><% } %>
+    <% if (subject) { %><input type="hidden" name="subject" value="<%= subject %>"><% } %>
+    <input type="text" name="q" placeholder="Search by name, email, subject, or message…" value="<%= q %>" autofocus>
+    <select name="subject" onchange="this.form.submit()" style="max-width:220px;">
+      <option value="">All subjects</option>
+      <% subjects.forEach(s => { %>
+        <option value="<%= s %>" <%= subject === s ? 'selected' : '' %>><%= s %></option>
+      <% }) %>
+    </select>
+    <button class="btn" type="submit">Search</button>
+    <% if (q || subject) { %>
+      <a class="btn outline" href="/admin/messages<%= status !== 'all' ? '?status=' + status : '' %>">Clear</a>
+    <% } %>
+  </form>
+
+  <%
+    var baseParts = [];
+    if (q) baseParts.push('q=' + encodeURIComponent(q));
+    if (subject) baseParts.push('subject=' + encodeURIComponent(subject));
+    var baseQS = baseParts.join('&');
+    function statusHref(s) {
+      var parts = baseParts.slice();
+      if (s !== 'all') parts.push('status=' + s);
+      return '/admin/messages' + (parts.length ? '?' + parts.join('&') : '');
+    }
+  %>
+  <div class="filter-tabs">
+    <a href="<%= statusHref('all') %>" class="<%= status === 'all' ? 'active' : '' %>">All</a>
+    <a href="<%= statusHref('unread') %>" class="<%= status === 'unread' ? 'active' : '' %>">Unread</a>
+    <a href="<%= statusHref('read') %>" class="<%= status === 'read' ? 'active' : '' %>">Read</a>
+  </div>
+
   <% if (messages.length === 0) { %>
-    <div class="empty-state"><p>No messages submitted yet.</p></div>
+    <div class="empty-state">
+      <% if (q || subject || status !== 'all') { %>
+        <p>No messages match your filters.</p>
+      <% } else { %>
+        <p>No messages submitted yet.</p>
+      <% } %>
+    </div>
   <% } else { %>
     <% messages.forEach(m => { %>
       <div class="msg-card <%= m.read ? '' : 'unread' %>">
@@ -46,11 +85,17 @@
         <div class="msg-actions">
           <% if (!m.read) { %>
             <form class="inline-form" method="POST" action="/admin/messages/<%= m.id %>/read">
+              <input type="hidden" name="_q" value="<%= q %>">
+              <input type="hidden" name="_status" value="<%= status %>">
+              <input type="hidden" name="_subject" value="<%= subject %>">
               <button class="btn small outline" type="submit">Mark as read</button>
             </form>
           <% } %>
           <form class="inline-form" method="POST" action="/admin/messages/<%= m.id %>/delete"
                 onsubmit="return confirm('Delete this message permanently?');">
+            <input type="hidden" name="_q" value="<%= q %>">
+            <input type="hidden" name="_status" value="<%= status %>">
+            <input type="hidden" name="_subject" value="<%= subject %>">
             <button class="btn small danger" type="submit">Delete</button>
           </form>
         </div>

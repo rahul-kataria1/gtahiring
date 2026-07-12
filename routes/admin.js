@@ -389,20 +389,48 @@ router.post('/settings/favicon/delete', (req, res) => {
 });
 
 // Contact messages
+const MESSAGE_SUBJECTS = ['General inquiry', 'Job posting issue', 'Account problem', 'Report a listing', 'Partnership or advertising', 'Other'];
+
 router.get('/messages', (req, res) => {
-  const messages = db.prepare('SELECT * FROM contact_messages ORDER BY created_at DESC').all();
-  const unreadCount = messages.filter(m => !m.read).length;
-  res.render('admin/messages', { title: 'Contact messages', messages, unreadCount });
+  const q = (req.query.q || '').trim();
+  const status = ['unread', 'read'].includes(req.query.status) ? req.query.status : 'all';
+  const subject = MESSAGE_SUBJECTS.includes(req.query.subject) ? req.query.subject : '';
+
+  let sql = 'SELECT * FROM contact_messages WHERE 1=1';
+  const params = [];
+  if (q) {
+    sql += ' AND (name LIKE ? OR email LIKE ? OR subject LIKE ? OR message LIKE ?)';
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+  }
+  if (status === 'unread') sql += ' AND read = 0';
+  if (status === 'read') sql += ' AND read = 1';
+  if (subject) {
+    sql += ' AND subject = ?';
+    params.push(subject);
+  }
+  sql += ' ORDER BY created_at DESC';
+
+  const messages = db.prepare(sql).all(...params);
+  const unreadCount = db.prepare('SELECT COUNT(*) as c FROM contact_messages WHERE read = 0').get().c;
+  res.render('admin/messages', { title: 'Contact messages', messages, unreadCount, q, status, subject, subjects: MESSAGE_SUBJECTS });
 });
+
+function buildMessagesRedirect(body) {
+  const parts = [];
+  if (body._q) parts.push(`q=${encodeURIComponent(body._q)}`);
+  if (body._status && body._status !== 'all') parts.push(`status=${encodeURIComponent(body._status)}`);
+  if (body._subject) parts.push(`subject=${encodeURIComponent(body._subject)}`);
+  return '/admin/messages' + (parts.length ? '?' + parts.join('&') : '');
+}
 
 router.post('/messages/:id/read', (req, res) => {
   db.prepare('UPDATE contact_messages SET read = 1 WHERE id = ?').run(req.params.id);
-  res.redirect('/admin/messages');
+  res.redirect(buildMessagesRedirect(req.body));
 });
 
 router.post('/messages/:id/delete', (req, res) => {
   db.prepare('DELETE FROM contact_messages WHERE id = ?').run(req.params.id);
-  res.redirect('/admin/messages');
+  res.redirect(buildMessagesRedirect(req.body));
 });
 
 // Pages CMS
