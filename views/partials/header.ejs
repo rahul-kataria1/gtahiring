@@ -81,4 +81,8 @@
       overlay.addEventListener('click', close);
     }());
   </script>
+  <% if (currentUser) { %>
+    <script>window.__PUSH_ENABLED = true;</script>
+    <script src="/js/push.js"></script>
+  <% } %>
   <main class="container">

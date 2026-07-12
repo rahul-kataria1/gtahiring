@@ -184,4 +184,29 @@ seedPages.run('terms', 'Terms & Conditions', `<h2>1. Acceptance of Terms</h2>
 seedPages.run('contact', 'Contact Us', '<p>Have a question, found an issue, or want to work with us? Fill in the form and we\'ll get back to you as soon as possible.</p>',
   JSON.stringify({ email: 'hello@gtahiring.ca', location: 'Greater Toronto Area, Ontario', response_time: 'Within 1–2 business days' }));
 
+// Contact form submissions
+db.exec(`
+  CREATE TABLE IF NOT EXISTS contact_messages (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT NOT NULL,
+    email      TEXT NOT NULL,
+    subject    TEXT NOT NULL,
+    message    TEXT NOT NULL,
+    read       INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+
+// iOS push notification device tokens
+db.exec(`
+  CREATE TABLE IF NOT EXISTS push_tokens (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token      TEXT NOT NULL,
+    platform   TEXT NOT NULL DEFAULT 'ios',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (user_id, token)
+  )
+`);
+
 module.exports = db;

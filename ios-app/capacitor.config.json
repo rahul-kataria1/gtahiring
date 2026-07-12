@@ -1,0 +1,13 @@
+{
+  "appId": "com.gtahiring.jobs",
+  "appName": "GTA Hiring",
+  "webDir": "www",
+  "server": {
+    "url": "https://jobs.gtahiring.com",
+    "iosScheme": "https",
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "automatic"
+  }
+}

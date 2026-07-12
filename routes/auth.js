@@ -99,6 +99,15 @@ router.post('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/'));
 });
 
+// ── Push notification device token registration (iOS app) ────────────────────
+router.post('/push/register-token', requireAuth, (req, res) => {
+  const { token, platform } = req.body;
+  if (!token) return res.status(400).json({ error: 'token required' });
+  db.prepare('INSERT OR IGNORE INTO push_tokens (user_id, token, platform) VALUES (?, ?, ?)')
+    .run(req.session.user.id, token, platform || 'ios');
+  res.json({ ok: true });
+});
+
 // ── Dashboard redirect ────────────────────────────────────────────────────────
 router.get('/dashboard', (req, res) => {
   const user = req.session.user;

@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../db/db');
 const { requireRole } = require('../middleware/auth');
 const { notifySeekerStatusChange } = require('../utils/emails');
+const { sendPushNotification } = require('../utils/push');
 
 const router = express.Router();
 router.use(requireRole('employer'));
@@ -152,6 +153,10 @@ router.post('/jobs/:id/applicants/:appId/status', (req, res) => {
         jobTitle:    job.title,
         company:     job.company,
         newStatus:   status,
+      });
+      sendPushNotification(app.seeker_id, {
+        title: 'Application update',
+        body: `Your application for "${job.title}" is now ${status}.`,
       });
     }
   }

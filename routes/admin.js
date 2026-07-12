@@ -5,6 +5,7 @@ const multer = require('multer');
 const db = require('../db/db');
 const { requireRole } = require('../middleware/auth');
 const { notifyEmployerJobStatus } = require('../utils/emails');
+const { sendPushNotification } = require('../utils/push');
 
 const imageUpload = multer({
   storage: multer.diskStorage({
@@ -147,6 +148,10 @@ router.post('/jobs/:id/status', (req, res) => {
           jobTitle:      job.title,
           newStatus:     status,
           jobId:         job.id,
+        });
+        sendPushNotification(job.employer_id, {
+          title: status === 'approved' ? 'Job posting approved' : 'Job posting rejected',
+          body: `"${job.title}" was ${status} by the admin team.`,
         });
       }
     }
@@ -376,6 +381,23 @@ router.post('/settings/favicon/delete', (req, res) => {
   if (fs.existsSync(FAVICON_PNG_PATH)) fs.unlinkSync(FAVICON_PNG_PATH);
   if (fs.existsSync(FAVICON_ICO_PATH)) fs.unlinkSync(FAVICON_ICO_PATH);
   res.render('admin/settings', settingsState({ success: 'Site icon removed.' }));
+});
+
+// Contact messages
+router.get('/messages', (req, res) => {
+  const messages = db.prepare('SELECT * FROM contact_messages ORDER BY created_at DESC').all();
+  const unreadCount = messages.filter(m => !m.read).length;
+  res.render('admin/messages', { title: 'Contact messages', messages, unreadCount });
+});
+
+router.post('/messages/:id/read', (req, res) => {
+  db.prepare('UPDATE contact_messages SET read = 1 WHERE id = ?').run(req.params.id);
+  res.redirect('/admin/messages');
+});
+
+router.post('/messages/:id/delete', (req, res) => {
+  db.prepare('DELETE FROM contact_messages WHERE id = ?').run(req.params.id);
+  res.redirect('/admin/messages');
 });
 
 // Pages CMS

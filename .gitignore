@@ -1,3 +1,11 @@
 node_modules/
 .env
 db/jobboard.db-*
+
+# iOS wrapper app
+ios-app/node_modules/
+ios-app/ios/App/Pods/
+ios-app/ios/App/build/
+ios-app/ios/DerivedData/
+*.xcuserstate
+xcuserdata/

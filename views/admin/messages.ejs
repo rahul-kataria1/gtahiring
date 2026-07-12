@@ -1,0 +1,60 @@
+<%- include('../partials/admin-header') %>
+  <style>
+    .msg-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 14px;
+      padding: 18px 22px; margin-bottom: 14px;
+    }
+    .msg-card.unread { border-left: 4px solid var(--violet); }
+    .msg-card-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; margin-bottom: 10px;
+    }
+    .msg-from strong { display: block; font-size: 0.95rem; color: var(--text); }
+    .msg-from span { font-size: 0.82rem; color: var(--muted); }
+    .msg-meta { text-align: right; flex-shrink: 0; }
+    .msg-date { font-size: 0.78rem; color: var(--muted); }
+    .msg-subject {
+      display: inline-block; margin-top: 4px; font-size: 0.76rem; font-weight: 700;
+      color: var(--violet-dark); background: var(--violet-bg); padding: 3px 10px; border-radius: 20px;
+    }
+    .msg-body { font-size: 0.89rem; color: var(--text); line-height: 1.6; white-space: pre-wrap; margin-bottom: 12px; }
+    .msg-actions { display: flex; gap: 8px; }
+  </style>
+
+  <h1>Contact messages</h1>
+  <p class="subtitle">
+    <%= messages.length %> message<%= messages.length === 1 ? '' : 's' %>
+    <% if (unreadCount > 0) { %> &middot; <strong><%= unreadCount %> unread</strong><% } %>
+  </p>
+
+  <% if (messages.length === 0) { %>
+    <div class="empty-state"><p>No messages submitted yet.</p></div>
+  <% } else { %>
+    <% messages.forEach(m => { %>
+      <div class="msg-card <%= m.read ? '' : 'unread' %>">
+        <div class="msg-card-head">
+          <div class="msg-from">
+            <strong><%= m.name %></strong>
+            <span><a href="mailto:<%= m.email %>"><%= m.email %></a></span>
+          </div>
+          <div class="msg-meta">
+            <div class="msg-date"><%= m.created_at.slice(0, 16).replace('T', ' ') %></div>
+            <span class="msg-subject"><%= m.subject %></span>
+          </div>
+        </div>
+        <div class="msg-body"><%= m.message %></div>
+        <div class="msg-actions">
+          <% if (!m.read) { %>
+            <form class="inline-form" method="POST" action="/admin/messages/<%= m.id %>/read">
+              <button class="btn small outline" type="submit">Mark as read</button>
+            </form>
+          <% } %>
+          <form class="inline-form" method="POST" action="/admin/messages/<%= m.id %>/delete"
+                onsubmit="return confirm('Delete this message permanently?');">
+            <button class="btn small danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+<%- include('../partials/admin-footer') %>

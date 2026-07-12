@@ -25,6 +25,8 @@ router.post('/contact', (req, res) => {
   if (!name || !email || !subject || !message) {
     return res.render('pages/contact', { title: page.title, page, meta, sent: false, error: 'Please fill in all fields.' });
   }
+  db.prepare('INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)')
+    .run(name.trim(), email.trim(), subject.trim(), message.trim());
   res.render('pages/contact', { title: page.title, page, meta, sent: true, error: null });
 });
 
