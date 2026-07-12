@@ -546,6 +546,12 @@ body.admin-layout { background: #f1f5f9; }
 .admin-nav-item.active { background: #0057d8; color: #fff; font-weight: 600; }
 .admin-nav-item.active svg { opacity: 1; }
 
+.admin-nav-count {
+  margin-left: auto; background: #ef4444; color: #fff;
+  font-size: 0.7rem; font-weight: 700; line-height: 1;
+  padding: 3px 7px; border-radius: 20px; flex-shrink: 0;
+}
+
 /* Sub-menu */
 .admin-nav-sub {
   margin: 1px 8px 4px 42px;

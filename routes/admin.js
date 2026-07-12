@@ -69,6 +69,11 @@ const faviconUpload = multer({
 const router = express.Router();
 router.use(requireRole('admin'));
 
+router.use((req, res, next) => {
+  res.locals.unreadMessageCount = db.prepare('SELECT COUNT(*) as c FROM contact_messages WHERE read = 0').get().c;
+  next();
+});
+
 router.get('/dashboard', (req, res) => {
   const stats = {
     jobSeekers:        db.prepare("SELECT COUNT(*) as c FROM users WHERE role = 'seeker'").get().c,
