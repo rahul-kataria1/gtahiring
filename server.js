@@ -14,6 +14,7 @@ process.on('unhandledRejection', (err) => {
   fs.appendFileSync(CRASH_LOG, `\n[${new Date().toISOString()}] unhandledRejection\n${err}\ncwd: ${process.cwd()}\n`);
 });
 
+const db = require('./db/db');
 const { attachUser } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 const jobRoutes = require('./routes/jobs');
@@ -46,6 +47,13 @@ app.use(attachUser);
 const LOGO_PATH = path.join(__dirname, 'public/images/logo.png');
 app.use((req, res, next) => {
   res.locals.siteLogoExists = fs.existsSync(LOGO_PATH);
+  next();
+});
+
+// Make the AdSense on/off setting visible to every view
+app.use((req, res, next) => {
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'ads_enabled'").get();
+  res.locals.adsEnabled = row ? row.value === '1' : true;
   next();
 });
 

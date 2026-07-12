@@ -135,6 +135,37 @@
       </div>
     </div>
 
+    <!-- Advertising -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div class="settings-card-head-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="7" y1="14" x2="13" y2="14"/></svg>
+        </div>
+        <div>
+          <h2>Advertising</h2>
+          <p>Google AdSense auto ads shown across the site.</p>
+        </div>
+      </div>
+      <div class="settings-card-body">
+        <form method="POST" action="/admin/settings/ads">
+          <div class="toggle-row">
+            <div class="toggle-label">
+              <strong>Show ads site-wide</strong>
+              <span>When off, no AdSense ads are loaded for any visitor.</span>
+            </div>
+            <div class="toggle-switch-wrap">
+              <label class="toggle-switch">
+                <input type="checkbox" name="ads_enabled" value="1" <%= adsEnabled ? 'checked' : '' %>
+                  onchange="this.form.submit()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <noscript><button class="btn small" type="submit">Save</button></noscript>
+        </form>
+      </div>
+    </div>
+
     <!-- Site icon / favicon -->
     <div class="settings-card">
       <div class="settings-card-head">

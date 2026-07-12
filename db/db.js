@@ -79,6 +79,7 @@ db.exec(`
 `);
 db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('require_job_review', '1')").run();
 db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('blog_per_page', '10')").run();
+db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('ads_enabled', '1')").run();
 
 // Pages CMS table
 db.exec(`

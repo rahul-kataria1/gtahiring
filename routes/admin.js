@@ -326,6 +326,7 @@ function settingsState(overrides) {
     faviconExists: faviconIsIco || faviconIsPng,
     faviconUrl: faviconIsIco ? '/images/favicon.ico' : '/images/favicon.png',
     blogPerPage: parseInt(getSetting('blog_per_page') || '10', 10),
+    adsEnabled: getSetting('ads_enabled') !== '0',
     error: null,
     success: null,
   }, overrides);
@@ -333,6 +334,12 @@ function settingsState(overrides) {
 
 router.get('/settings', (req, res) => {
   res.render('admin/settings', settingsState());
+});
+
+router.post('/settings/ads', (req, res) => {
+  const enabled = req.body.ads_enabled === '1';
+  db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('ads_enabled', ?)").run(enabled ? '1' : '0');
+  res.render('admin/settings', settingsState({ adsEnabled: enabled, success: `Ads turned ${enabled ? 'on' : 'off'} site-wide.` }));
 });
 
 router.post('/settings/general', (req, res) => {
