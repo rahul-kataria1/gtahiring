@@ -4,12 +4,20 @@ const fs = require('fs');
 // DB_PATH env var lets Railway (or any host) store the file on a persistent volume
 const ABS_PATH = process.env.DB_PATH || path.join(__dirname, 'jobboard.db');
 
-// On first deploy, seed the volume with the bundled database so existing data carries over
-if (process.env.DB_PATH && !fs.existsSync(ABS_PATH)) {
+if (!process.env.DB_PATH) {
+  console.warn('[db] DB_PATH is not set — using the database bundled in the container image. ' +
+    'This file resets on every deploy. Set DB_PATH to a path on a persistent volume to keep data.');
+} else if (fs.existsSync(ABS_PATH)) {
+  console.log(`[db] Using existing persistent database at ${ABS_PATH}`);
+} else {
+  // On first deploy, seed the volume with the bundled database so existing data carries over
   const bundled = path.join(__dirname, 'jobboard.db');
   if (fs.existsSync(bundled)) {
     fs.mkdirSync(path.dirname(ABS_PATH), { recursive: true });
     fs.copyFileSync(bundled, ABS_PATH);
+    console.log(`[db] First boot on this volume — seeded ${ABS_PATH} from the bundled database.`);
+  } else {
+    console.log(`[db] First boot on this volume — no bundled database found; a fresh one will be created at ${ABS_PATH}.`);
   }
 }
 
