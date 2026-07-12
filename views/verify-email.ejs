@@ -1,0 +1,50 @@
+<%- include('partials/header') %>
+  <style>
+    .auth-wrap { max-width: 460px; margin: 24px auto 0; }
+    .auth-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 36px 40px; box-shadow: 0 8px 40px rgba(0,87,216,0.1); margin-top: 8px;
+      text-align: center;
+    }
+    .auth-icon {
+      width: 52px; height: 52px; border-radius: 14px; margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .auth-icon svg { width: 24px; height: 24px; color: #fff; }
+    .auth-card h1 { margin-bottom: 4px; }
+    .auth-card .subtitle { margin-bottom: 24px; }
+    .auth-card .btn { justify-content: center; padding: 12px 24px; font-size: 0.95rem; }
+  </style>
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <% if (status === 'success') { %>
+        <div class="auth-icon" style="background:linear-gradient(135deg, var(--success) 0%, var(--success-text) 100%);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <h1>Email verified!</h1>
+        <p class="subtitle">Your account is active. Welcome to GTA Hiring.</p>
+        <a class="btn" href="/dashboard" style="display:inline-flex;">Go to my dashboard</a>
+
+      <% } else if (status === 'expired') { %>
+        <div class="auth-icon" style="background:linear-gradient(135deg, var(--warning) 0%, var(--warning-dark) 100%);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h1>Link expired</h1>
+        <p class="subtitle">This verification link has expired. We can send you a new one.</p>
+        <form method="POST" action="/resend-verification">
+          <input type="hidden" name="email" value="<%= email %>">
+          <button class="btn" type="submit" style="display:inline-flex;">Resend verification email</button>
+        </form>
+
+      <% } else { %>
+        <div class="auth-icon" style="background:linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <h1>Invalid verification link</h1>
+        <p class="subtitle">This link is invalid or has already been used. Try logging in, or register again.</p>
+        <a class="btn outline" href="/login" style="display:inline-flex;">Back to log in</a>
+      <% } %>
+    </div>
+  </div>
+<%- include('partials/footer') %>

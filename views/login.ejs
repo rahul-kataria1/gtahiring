@@ -43,7 +43,15 @@
       <h1>Welcome back</h1>
       <p class="subtitle">Log in to manage jobs or applications.</p>
 
-      <% if (error) { %><div class="alert error"><%= error %></div><% } %>
+      <% if (error) { %>
+        <div class="alert error"><%= error %></div>
+        <% if (unverified) { %>
+          <form method="POST" action="/resend-verification" style="margin-bottom:18px;">
+            <input type="hidden" name="email" value="<%= email %>">
+            <button class="btn outline" type="submit" style="width:100%;justify-content:center;">Resend verification email</button>
+          </form>
+        <% } %>
+      <% } %>
 
       <form method="POST" action="/login">
         <div class="field">

@@ -62,6 +62,7 @@
           <th>Email</th>
           <th>Role</th>
           <th>Status</th>
+          <th>Verified</th>
           <th>Joined</th>
           <% if (hasEmployers) { %><th class="col-review">Job review</th><% } %>
           <th></th>
@@ -74,6 +75,13 @@
             <td><%= u.email %></td>
             <td><%= u.role %></td>
             <td><span class="badge <%= u.status %>"><%= u.status %></span></td>
+            <td>
+              <% if (u.email_verified) { %>
+                <span class="review-toggle-btn review-on" style="cursor:default;"><span class="review-dot"></span>Verified</span>
+              <% } else { %>
+                <span class="review-toggle-btn review-off" style="cursor:default;"><span class="review-dot"></span>Unverified</span>
+              <% } %>
+            </td>
             <td><%= u.created_at.slice(0, 10) %></td>
             <% if (hasEmployers) { %>
               <td>

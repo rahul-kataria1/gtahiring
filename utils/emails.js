@@ -147,9 +147,28 @@ async function sendWelcomeEmail({ to, name, role }) {
   });
 }
 
+// ─────────────────────────────────────────────────────────────
+// 5. Verify email address on registration
+// ─────────────────────────────────────────────────────────────
+async function sendVerificationEmail({ to, name, token }) {
+  await sendMail({
+    to,
+    subject: 'Verify your email — GTA Hiring',
+    html: wrap(`
+      <h2 style="margin:0 0 8px;font-size:1.3rem;color:#1a2540;">Confirm your email, ${name}</h2>
+      <p style="color:#475569;margin:0 0 8px;">
+        Thanks for signing up! Click below to verify your email address and activate your GTA Hiring account.
+      </p>
+      <p style="color:#94a3b8;font-size:0.85rem;margin:0;">This link expires in 24 hours.</p>
+      ${btn('Verify my email', `${APP_URL()}/verify-email?token=${token}`)}
+    `),
+  });
+}
+
 module.exports = {
   notifyEmployerNewApplication,
   notifySeekerStatusChange,
   notifyEmployerJobStatus,
   sendWelcomeEmail,
+  sendVerificationEmail,
 };

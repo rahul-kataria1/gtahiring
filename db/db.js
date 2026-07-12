@@ -69,6 +69,11 @@ try { db.exec('ALTER TABLE applications ADD COLUMN applicant_email TEXT'); } cat
 try { db.exec('ALTER TABLE applications ADD COLUMN applicant_phone TEXT'); } catch (e) {}
 try { db.exec('ALTER TABLE applications ADD COLUMN work_eligible INTEGER'); } catch (e) {}
 try { db.exec('ALTER TABLE users ADD COLUMN require_review INTEGER DEFAULT 1'); } catch (e) {}
+// Existing accounts are grandfathered in as verified (DEFAULT 1); new
+// registrations explicitly set this to 0 until the user clicks the email link.
+try { db.exec('ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 1'); } catch (e) {}
+try { db.exec('ALTER TABLE users ADD COLUMN verification_token TEXT'); } catch (e) {}
+try { db.exec('ALTER TABLE users ADD COLUMN verification_token_expires TEXT'); } catch (e) {}
 
 // Key-value site settings
 db.exec(`
