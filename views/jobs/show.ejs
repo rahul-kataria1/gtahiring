@@ -27,13 +27,13 @@
       gap: 24px;
       align-items: start;
     }
+    /* ── Sidebar sticky ───────────────────────────── */
+    .job-sidebar { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 16px; }
+
     @media (max-width: 768px) {
       .job-layout { grid-template-columns: 1fr; }
       .job-sidebar { order: -1; position: static; }
     }
-
-    /* ── Sidebar sticky ───────────────────────────── */
-    .job-sidebar { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 16px; }
 
     /* ── Panel card ───────────────────────────────── */
     .panel-card {
