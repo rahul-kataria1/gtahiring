@@ -5,7 +5,7 @@ const multer = require('multer');
 const db = require('../db/db');
 const { requireRole } = require('../middleware/auth');
 const { notifyEmployerJobStatus } = require('../utils/emails');
-const { sendPushNotification } = require('../utils/push');
+const { sendPushNotification, isPushConfigured } = require('../utils/push');
 
 const imageUpload = multer({
   storage: multer.diskStorage({
@@ -431,6 +431,42 @@ router.post('/messages/:id/read', (req, res) => {
 router.post('/messages/:id/delete', (req, res) => {
   db.prepare('DELETE FROM contact_messages WHERE id = ?').run(req.params.id);
   res.redirect(buildMessagesRedirect(req.body));
+});
+
+// Push notifications (admin broadcast)
+function pushRecipientCounts() {
+  return {
+    all: db.prepare('SELECT COUNT(DISTINCT user_id) as c FROM push_tokens').get().c,
+    seeker: db.prepare("SELECT COUNT(DISTINCT pt.user_id) as c FROM push_tokens pt JOIN users u ON u.id = pt.user_id WHERE u.role = 'seeker'").get().c,
+    employer: db.prepare("SELECT COUNT(DISTINCT pt.user_id) as c FROM push_tokens pt JOIN users u ON u.id = pt.user_id WHERE u.role = 'employer'").get().c,
+  };
+}
+
+router.get('/push', (req, res) => {
+  res.render('admin/push', { title: 'Push notifications', counts: pushRecipientCounts(), configured: isPushConfigured(), error: null, success: null });
+});
+
+router.post('/push/send', (req, res) => {
+  const { title: pushTitle, body, audience } = req.body;
+  if (!pushTitle || !pushTitle.trim() || !body || !body.trim()) {
+    return res.render('admin/push', { title: 'Push notifications', counts: pushRecipientCounts(), configured: isPushConfigured(), error: 'Title and message are required.', success: null });
+  }
+
+  let sql = 'SELECT DISTINCT pt.user_id as user_id FROM push_tokens pt';
+  const params = [];
+  if (audience === 'seeker' || audience === 'employer') {
+    sql += ' JOIN users u ON u.id = pt.user_id WHERE u.role = ?';
+    params.push(audience);
+  }
+  const recipients = db.prepare(sql).all(...params);
+  recipients.forEach(r => sendPushNotification(r.user_id, { title: pushTitle.trim(), body: body.trim() }));
+
+  const count = recipients.length;
+  const success = isPushConfigured()
+    ? `Notification sent to ${count} recipient${count === 1 ? '' : 's'}.`
+    : `${count} recipient${count === 1 ? '' : 's'} matched, but Apple Push credentials aren't configured yet (APN_TEAM_ID / APN_KEY_ID / APN_AUTH_KEY / APN_BUNDLE_ID) — nothing was actually delivered.`;
+
+  res.render('admin/push', { title: 'Push notifications', counts: pushRecipientCounts(), configured: isPushConfigured(), error: null, success });
 });
 
 // Pages CMS

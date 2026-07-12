@@ -1,0 +1,67 @@
+<%- include('../partials/admin-header') %>
+  <style>
+    .push-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden; max-width: 640px;
+    }
+    .push-card-head {
+      padding: 18px 24px 14px; border-bottom: 1px solid var(--border-light);
+    }
+    .push-card-head h2 { margin: 0 0 2px; font-size: 1rem; }
+    .push-card-head p  { margin: 0; font-size: 0.82rem; color: var(--muted); }
+    .push-card-body { padding: 20px 24px; }
+    .push-audience-counts {
+      display: flex; gap: 10px; flex-wrap: wrap; margin: -6px 0 18px;
+      font-size: 0.78rem; color: var(--muted);
+    }
+    .push-audience-counts strong { color: var(--text); }
+  </style>
+
+  <h1>Push notifications</h1>
+  <p class="subtitle">Send a push notification to everyone using the GTA Hiring iOS app.</p>
+
+  <% if (!configured) { %>
+    <div class="alert" style="margin-bottom:20px;background:var(--warning-bg);color:var(--warning-dark);border:1px solid var(--warning);">
+      Apple Push credentials aren't configured yet on the server (APN_TEAM_ID / APN_KEY_ID / APN_AUTH_KEY / APN_BUNDLE_ID).
+      You can still compose and "send" notifications below, but nothing will actually be delivered until those are set.
+    </div>
+  <% } %>
+
+  <% if (error) { %><div class="alert error" style="margin-bottom:20px;"><%= error %></div><% } %>
+  <% if (success) { %><div class="alert success" style="margin-bottom:20px;"><%= success %></div><% } %>
+
+  <div class="push-card">
+    <div class="push-card-head">
+      <h2>Compose notification</h2>
+      <p>Delivered instantly to every device with notifications enabled.</p>
+    </div>
+    <div class="push-card-body">
+      <div class="push-audience-counts">
+        <span><strong><%= counts.all %></strong> total enabled</span>
+        <span>&middot;</span>
+        <span><strong><%= counts.seeker %></strong> job seekers</span>
+        <span>&middot;</span>
+        <span><strong><%= counts.employer %></strong> employers</span>
+      </div>
+      <form method="POST" action="/admin/push/send">
+        <div class="field">
+          <label for="audience">Send to</label>
+          <select id="audience" name="audience">
+            <option value="all">Everyone (<%= counts.all %>)</option>
+            <option value="seeker">Job seekers only (<%= counts.seeker %>)</option>
+            <option value="employer">Employers only (<%= counts.employer %>)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" name="title" type="text" placeholder="New jobs posted today!" maxlength="80" required>
+        </div>
+        <div class="field">
+          <label for="body">Message</label>
+          <textarea id="body" name="body" rows="3" placeholder="Check out the latest openings in the GTA." maxlength="180" required style="resize:vertical;"></textarea>
+        </div>
+        <button class="btn" type="submit" onclick="return confirm('Send this notification now? This cannot be undone.');">Send notification →</button>
+      </form>
+    </div>
+  </div>
+<%- include('../partials/admin-footer') %>

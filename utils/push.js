@@ -52,4 +52,8 @@ function sendPushNotification(userId, { title, body, data }) {
   });
 }
 
-module.exports = { sendPushNotification };
+function isPushConfigured() {
+  return !!(process.env.APN_TEAM_ID && process.env.APN_KEY_ID && process.env.APN_AUTH_KEY && process.env.APN_BUNDLE_ID);
+}
+
+module.exports = { sendPushNotification, isPushConfigured };
