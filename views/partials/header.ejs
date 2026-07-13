@@ -58,6 +58,7 @@
             <a href="/admin/dashboard" class="btn small">Admin panel</a>
             <form class="inline-form" method="POST" action="/logout"><button class="btn small secondary" type="submit">Log out</button></form>
           <% } %>  <%# end role if %>
+          <%- include('notification-bell') %>
         <% } %>  <%# end else (logged-in) %>
       </nav>
     </div>

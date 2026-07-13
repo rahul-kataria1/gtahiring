@@ -6,6 +6,7 @@ const db = require('../db/db');
 const { requireRole } = require('../middleware/auth');
 const { notifyEmployerJobStatus } = require('../utils/emails');
 const { sendPushNotification, isPushConfigured } = require('../utils/push');
+const { notifyUser, notifyAdmins } = require('../utils/notifications');
 
 const imageUpload = multer({
   storage: multer.diskStorage({
@@ -158,6 +159,11 @@ router.post('/jobs/:id/status', (req, res) => {
         sendPushNotification(job.employer_id, {
           title: status === 'approved' ? 'Job posting approved' : 'Job posting rejected',
           body: `"${job.title}" was ${status} by the admin team.`,
+        });
+        notifyUser(job.employer_id, {
+          title: status === 'approved' ? 'Job posting approved' : 'Job posting rejected',
+          body: `"${job.title}" was ${status} by the admin team.`,
+          url: `/jobs/${job.id}`,
         });
       }
     }
@@ -495,6 +501,11 @@ router.post('/reports/:id/reply', (req, res) => {
   if (message && message.trim()) {
     db.prepare("INSERT INTO report_messages (report_id, sender_role, message) VALUES (?, 'admin', ?)").run(report.id, message.trim());
     db.prepare("UPDATE reports SET employer_unread = 1, admin_unread = 0, updated_at = datetime('now') WHERE id = ?").run(report.id);
+    notifyUser(report.employer_id, {
+      title: `New reply: ${report.subject}`,
+      body: message.trim(),
+      url: '/employer/reports',
+    });
   }
   res.redirect('/admin/reports');
 });

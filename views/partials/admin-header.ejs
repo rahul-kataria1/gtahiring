@@ -105,6 +105,7 @@
 
     <div class="admin-topbar-right">
       <% if (currentUser) { %>
+        <%- include('notification-bell') %>
         <%
           var _initials = (currentUser.name || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
         %>

@@ -1,0 +1,49 @@
+<div class="notif-bell-wrap" id="notifBellWrap">
+  <button class="notif-bell-btn" id="notifBellBtn" type="button" aria-label="Notifications" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+    <% if (locals.unreadNotificationsCount) { %><span class="notif-bell-dot"></span><% } %>
+  </button>
+  <div class="notif-dropdown" id="notifDropdown">
+    <div class="notif-dropdown-head">
+      <span>Notifications</span>
+      <% if (locals.unreadNotificationsCount) { %>
+        <form method="POST" action="/notifications/mark-all-read">
+          <button type="submit" class="notif-markall">Mark all read</button>
+        </form>
+      <% } %>
+    </div>
+    <div class="notif-dropdown-body">
+      <% if (!locals.notifications || notifications.length === 0) { %>
+        <div class="notif-empty">You're all caught up.</div>
+      <% } else { %>
+        <% notifications.forEach(n => { %>
+          <a href="/notifications/<%= n.id %>/open" class="notif-item <%= n.read ? '' : 'unread' %>">
+            <div class="notif-item-title"><%= n.title %></div>
+            <div class="notif-item-body"><%= n.body %></div>
+            <time class="notif-item-time" data-timeago="<%= n.created_at %>"></time>
+          </a>
+        <% }) %>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('notifBellBtn');
+    var dropdown = document.getElementById('notifDropdown');
+    var wrap = document.getElementById('notifBellWrap');
+    if (!btn || !dropdown) return;
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = dropdown.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (e) {
+      if (!wrap.contains(e.target)) {
+        dropdown.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  })();
+</script>

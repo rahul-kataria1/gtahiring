@@ -5,6 +5,7 @@ const multer = require('multer');
 const db = require('../db/db');
 const { requireRole, requireAuth } = require('../middleware/auth');
 const { notifyEmployerNewApplication } = require('../utils/emails');
+const { notifyUser } = require('../utils/notifications');
 
 const router = express.Router();
 
@@ -121,6 +122,11 @@ router.post('/jobs/:id/apply', requireRole('seeker'), (req, res) => {
           applicantName: applicant_name.trim(),
           applicantEmail: applicant_email.trim(),
           jobId: job.id,
+        });
+        notifyUser(job.employer_id, {
+          title: 'New applicant',
+          body: `${applicant_name.trim()} applied for "${job.title}".`,
+          url: `/employer/jobs/${job.id}/applicants`,
         });
       }
     }

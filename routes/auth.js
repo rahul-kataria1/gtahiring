@@ -165,6 +165,19 @@ router.post('/push/register-token', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+// ── Notification bell ──────────────────────────────────────────────────────
+router.get('/notifications/:id/open', requireAuth, (req, res) => {
+  const n = db.prepare('SELECT * FROM notifications WHERE id = ? AND user_id = ?').get(req.params.id, req.session.user.id);
+  if (!n) return res.redirect('/dashboard');
+  db.prepare('UPDATE notifications SET read = 1 WHERE id = ?').run(n.id);
+  res.redirect(n.url || '/dashboard');
+});
+
+router.post('/notifications/mark-all-read', requireAuth, (req, res) => {
+  db.prepare('UPDATE notifications SET read = 1 WHERE user_id = ?').run(req.session.user.id);
+  res.redirect(req.get('Referer') || '/dashboard');
+});
+
 // ── Dashboard redirect ────────────────────────────────────────────────────────
 router.get('/dashboard', (req, res) => {
   const user = req.session.user;

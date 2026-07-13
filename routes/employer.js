@@ -3,6 +3,7 @@ const db = require('../db/db');
 const { requireRole } = require('../middleware/auth');
 const { notifySeekerStatusChange } = require('../utils/emails');
 const { sendPushNotification } = require('../utils/push');
+const { notifyUser, notifyAdmins } = require('../utils/notifications');
 
 const router = express.Router();
 router.use(requireRole('employer'));
@@ -164,6 +165,11 @@ router.post('/jobs/:id/applicants/:appId/status', (req, res) => {
         title: 'Application update',
         body: `Your application for "${job.title}" is now ${status}.`,
       });
+      notifyUser(app.seeker_id, {
+        title: 'Application update',
+        body: `Your application for "${job.title}" at ${job.company} is now ${status}.`,
+        url: '/seeker/dashboard',
+      });
     }
   }
   res.redirect(`/employer/jobs/${job.id}/applicants`);
@@ -204,6 +210,11 @@ router.post('/reports', (req, res) => {
     .run(req.session.user.id, ['report', 'suggestion'].includes(type) ? type : 'suggestion', subject.trim());
   db.prepare("INSERT INTO report_messages (report_id, sender_role, message) VALUES (?, 'employer', ?)")
     .run(info.lastInsertRowid, message.trim());
+  notifyAdmins({
+    title: `New ${type === 'report' ? 'report' : 'suggestion'}: ${subject.trim()}`,
+    body: `${req.session.user.name} — ${message.trim()}`,
+    url: '/admin/reports',
+  });
   res.redirect('/employer/reports');
 });
 
@@ -214,6 +225,11 @@ router.post('/reports/:id/reply', (req, res) => {
   if (message && message.trim()) {
     db.prepare("INSERT INTO report_messages (report_id, sender_role, message) VALUES (?, 'employer', ?)").run(report.id, message.trim());
     db.prepare("UPDATE reports SET admin_unread = 1, employer_unread = 0, status = 'open', updated_at = datetime('now') WHERE id = ?").run(report.id);
+    notifyAdmins({
+      title: `New reply: ${report.subject}`,
+      body: `${req.session.user.name} — ${message.trim()}`,
+      url: '/admin/reports',
+    });
   }
   res.redirect('/employer/reports');
 });

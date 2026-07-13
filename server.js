@@ -57,6 +57,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Make the logged-in user's notification bell contents visible to every view
+app.use((req, res, next) => {
+  if (req.session.user) {
+    res.locals.notifications = db.prepare(
+      'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20'
+    ).all(req.session.user.id);
+    res.locals.unreadNotificationsCount = db.prepare(
+      'SELECT COUNT(*) as c FROM notifications WHERE user_id = ? AND read = 0'
+    ).get(req.session.user.id).c;
+  } else {
+    res.locals.notifications = [];
+    res.locals.unreadNotificationsCount = 0;
+  }
+  next();
+});
+
 app.use('/', authRoutes);
 app.use('/', jobRoutes);
 app.use('/employer', employerRoutes);
