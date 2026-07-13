@@ -166,13 +166,15 @@ main { padding: 44px 0 80px; min-height: 65vh; }
   border: none; background: transparent; cursor: pointer; color: inherit;
 }
 .notif-bell-btn svg { width: 19px; height: 19px; }
-.nav-links .notif-bell-btn:hover { background: rgba(255,255,255,0.14); }
+.nav-links .notif-bell-btn { color: rgba(255,255,255,0.78); }
+.nav-links .notif-bell-btn:hover { color: #fff; background: rgba(255,255,255,0.14); }
 .admin-topbar .notif-bell-btn { color: var(--text); }
 .admin-topbar .notif-bell-btn:hover { background: var(--violet-bg); }
 .notif-bell-dot {
   position: absolute; top: 6px; right: 7px; width: 8px; height: 8px;
   border-radius: 50%; background: #ef4444; border: 2px solid rgba(0,0,0,0.2);
 }
+.nav-links .notif-bell-dot { border-color: #001f5b; }
 .admin-topbar .notif-bell-dot { border-color: #fff; }
 
 .notif-dropdown {
@@ -186,6 +188,9 @@ main { padding: 44px 0 80px; min-height: 65vh; }
   padding: 12px 16px; border-bottom: 1px solid var(--border-light);
   font-weight: 700; font-size: 0.88rem; color: var(--text);
 }
+/* .nav-links span sets a light color for the header nav — override it since
+   the dropdown is nested inside .nav-links but must always read as a white card */
+.notif-dropdown-head span { color: var(--text); padding: 0; font-size: inherit; }
 .notif-markall {
   background: none; border: none; color: var(--violet); font-size: 0.76rem; font-weight: 600;
   cursor: pointer; font-family: inherit; padding: 0;
