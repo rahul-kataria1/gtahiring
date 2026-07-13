@@ -43,6 +43,15 @@ app.use(
 
 app.use(attachUser);
 
+// Cache-busting query param for /css and /js assets — changes on every deploy
+// (this process boots fresh each time) so browsers can't serve a stale style.css
+// after a CSS-only change, without needing per-file hashing.
+const ASSET_VERSION = Date.now();
+app.use((req, res, next) => {
+  res.locals.assetVersion = ASSET_VERSION;
+  next();
+});
+
 // Make logo availability visible to every view
 const LOGO_PATH = path.join(__dirname, 'public/images/logo.png');
 app.use((req, res, next) => {
