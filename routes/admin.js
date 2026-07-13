@@ -237,7 +237,53 @@ router.get('/users/:id', (req, res) => {
     jobs,
     applications,
     success: req.query.success === '1' ? req.query.msg || 'Done.' : null,
+    error: req.query.error || null,
   });
+});
+
+router.post('/users/:id/profile', (req, res) => {
+  const user = db.prepare("SELECT * FROM users WHERE id = ? AND role != 'admin'").get(req.params.id);
+  if (!user) return res.status(404).render('error', { title: 'Not found', message: 'User not found.' });
+
+  const { name, email, company_name, phone, address, city, province, postal_code } = req.body;
+  const redirectBase = `/admin/users/${user.id}`;
+
+  if (!name || !name.trim() || !email || !email.trim()) {
+    return res.redirect(`${redirectBase}?error=${encodeURIComponent('Name and email are required.')}`);
+  }
+
+  const taken = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(email.trim().toLowerCase(), user.id);
+  if (taken) {
+    return res.redirect(`${redirectBase}?error=${encodeURIComponent('That email is already in use by another account.')}`);
+  }
+
+  const params = [
+    name.trim(),
+    email.trim().toLowerCase(),
+    phone       ? phone.trim()       : null,
+    address     ? address.trim()     : null,
+    city        ? city.trim()        : null,
+    province    ? province.trim()    : null,
+    postal_code ? postal_code.trim().toUpperCase() : null,
+  ];
+
+  try {
+    if (user.role === 'employer') {
+      params.push(company_name ? company_name.trim() : null, user.id);
+      db.prepare(
+        'UPDATE users SET name=?, email=?, phone=?, address=?, city=?, province=?, postal_code=?, company_name=? WHERE id=?'
+      ).run(...params);
+    } else {
+      params.push(user.id);
+      db.prepare(
+        'UPDATE users SET name=?, email=?, phone=?, address=?, city=?, province=?, postal_code=? WHERE id=?'
+      ).run(...params);
+    }
+  } catch (dbErr) {
+    return res.redirect(`${redirectBase}?error=${encodeURIComponent('Could not save profile.')}`);
+  }
+
+  res.redirect(`${redirectBase}?success=1&msg=${encodeURIComponent('Profile updated.')}`);
 });
 
 router.post('/users/:id/toggle-review', (req, res) => {

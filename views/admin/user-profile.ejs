@@ -47,6 +47,8 @@
   @media(max-width:560px){ .up-info-grid { grid-template-columns:1fr; } }
   .up-info-item label { display:block; font-size:0.73rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px; }
   .up-info-item span { font-size:0.9rem; font-weight:500; }
+  .up-info-grid .field { margin-bottom:0; }
+  .up-info-grid .field label { font-size:0.73rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; }
 
   /* Action buttons in header */
   .up-actions { display:flex; flex-direction:column; gap:8px; flex-shrink:0; }
@@ -82,6 +84,9 @@
 
 <% if (success) { %>
   <div class="alert success" style="margin-bottom:16px;"><%= success %></div>
+<% } %>
+<% if (error) { %>
+  <div class="alert error" style="margin-bottom:16px;"><%= error %></div>
 <% } %>
 
 <!-- ── Header card ─────────────────────────────────── -->
@@ -160,42 +165,49 @@
   <% } %>
 </div>
 
-<!-- ── Contact info ────────────────────────────────── -->
+<!-- ── Profile details (editable) ──────────────────── -->
 <div class="up-section">
-  <div class="up-section-head"><h2>Contact information</h2></div>
+  <div class="up-section-head"><h2>Profile details</h2></div>
   <div class="up-section-body">
-    <div class="up-info-grid">
-      <div class="up-info-item">
-        <label>Phone</label>
-        <span><%= u.phone || '—' %></span>
-      </div>
-      <div class="up-info-item">
-        <label>Email</label>
-        <span><%= u.email %></span>
-      </div>
-      <div class="up-info-item">
-        <label>Address</label>
-        <span><%= u.address || '—' %></span>
-      </div>
-      <div class="up-info-item">
-        <label>City</label>
-        <span><%= u.city || '—' %></span>
-      </div>
-      <div class="up-info-item">
-        <label>Province</label>
-        <span><%= u.province || '—' %></span>
-      </div>
-      <div class="up-info-item">
-        <label>Postal code</label>
-        <span><%= u.postal_code || '—' %></span>
-      </div>
-      <% if (u.role === 'employer') { %>
-        <div class="up-info-item">
-          <label>Company</label>
-          <span><%= u.company_name || '—' %></span>
+    <form method="POST" action="/admin/users/<%= u.id %>/profile">
+      <div class="up-info-grid">
+        <div class="field">
+          <label for="up-name">Full name</label>
+          <input id="up-name" name="name" type="text" value="<%= u.name %>" required>
         </div>
-      <% } %>
-    </div>
+        <div class="field">
+          <label for="up-email">Email</label>
+          <input id="up-email" name="email" type="email" value="<%= u.email %>" required>
+        </div>
+        <div class="field">
+          <label for="up-phone">Phone</label>
+          <input id="up-phone" name="phone" type="text" value="<%= u.phone || '' %>">
+        </div>
+        <div class="field">
+          <label for="up-address">Address</label>
+          <input id="up-address" name="address" type="text" value="<%= u.address || '' %>">
+        </div>
+        <div class="field">
+          <label for="up-city">City</label>
+          <input id="up-city" name="city" type="text" value="<%= u.city || '' %>">
+        </div>
+        <div class="field">
+          <label for="up-province">Province</label>
+          <input id="up-province" name="province" type="text" value="<%= u.province || '' %>">
+        </div>
+        <div class="field">
+          <label for="up-postal">Postal code</label>
+          <input id="up-postal" name="postal_code" type="text" value="<%= u.postal_code || '' %>">
+        </div>
+        <% if (u.role === 'employer') { %>
+          <div class="field">
+            <label for="up-company">Company</label>
+            <input id="up-company" name="company_name" type="text" value="<%= u.company_name || '' %>">
+          </div>
+        <% } %>
+      </div>
+      <button class="btn" type="submit" style="margin-top:6px;">Save changes</button>
+    </form>
   </div>
 </div>
 
