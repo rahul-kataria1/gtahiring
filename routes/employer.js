@@ -7,6 +7,12 @@ const { sendPushNotification } = require('../utils/push');
 const router = express.Router();
 router.use(requireRole('employer'));
 
+router.use((req, res, next) => {
+  res.locals.unreadReportsCount = db.prepare('SELECT COUNT(*) as c FROM reports WHERE employer_id = ? AND employer_unread = 1')
+    .get(req.session.user.id).c;
+  next();
+});
+
 router.get('/dashboard', (req, res) => {
   const q = (req.query.q || '').trim();
   let sql = 'SELECT * FROM jobs WHERE employer_id = ?';
@@ -173,6 +179,43 @@ router.post('/jobs/:id/toggle-active', (req, res) => {
 router.post('/jobs/:id/delete', (req, res) => {
   db.prepare('DELETE FROM jobs WHERE id = ? AND employer_id = ?').run(req.params.id, req.session.user.id);
   res.redirect('/employer/dashboard');
+});
+
+// Reports & suggestions — threaded conversation with admin
+router.get('/reports', (req, res) => {
+  db.prepare('UPDATE reports SET employer_unread = 0 WHERE employer_id = ?').run(req.session.user.id);
+  const reports = db.prepare('SELECT * FROM reports WHERE employer_id = ? ORDER BY updated_at DESC').all(req.session.user.id);
+  reports.forEach(r => {
+    r.messages = db.prepare('SELECT * FROM report_messages WHERE report_id = ? ORDER BY created_at ASC').all(r.id);
+  });
+  res.render('employer/reports', { title: 'Reports & suggestions', reports, error: null });
+});
+
+router.post('/reports', (req, res) => {
+  const { type, subject, message } = req.body;
+  if (!subject || !subject.trim() || !message || !message.trim()) {
+    const reports = db.prepare('SELECT * FROM reports WHERE employer_id = ? ORDER BY updated_at DESC').all(req.session.user.id);
+    reports.forEach(r => {
+      r.messages = db.prepare('SELECT * FROM report_messages WHERE report_id = ? ORDER BY created_at ASC').all(r.id);
+    });
+    return res.render('employer/reports', { title: 'Reports & suggestions', reports, error: 'Subject and message are required.' });
+  }
+  const info = db.prepare("INSERT INTO reports (employer_id, type, subject) VALUES (?, ?, ?)")
+    .run(req.session.user.id, ['report', 'suggestion'].includes(type) ? type : 'suggestion', subject.trim());
+  db.prepare("INSERT INTO report_messages (report_id, sender_role, message) VALUES (?, 'employer', ?)")
+    .run(info.lastInsertRowid, message.trim());
+  res.redirect('/employer/reports');
+});
+
+router.post('/reports/:id/reply', (req, res) => {
+  const report = db.prepare('SELECT * FROM reports WHERE id = ? AND employer_id = ?').get(req.params.id, req.session.user.id);
+  if (!report) return res.status(404).render('error', { title: 'Not found', message: 'Report not found.' });
+  const { message } = req.body;
+  if (message && message.trim()) {
+    db.prepare("INSERT INTO report_messages (report_id, sender_role, message) VALUES (?, 'employer', ?)").run(report.id, message.trim());
+    db.prepare("UPDATE reports SET admin_unread = 1, employer_unread = 0, status = 'open', updated_at = datetime('now') WHERE id = ?").run(report.id);
+  }
+  res.redirect('/employer/reports');
 });
 
 module.exports = router;

@@ -71,6 +71,7 @@ router.use(requireRole('admin'));
 
 router.use((req, res, next) => {
   res.locals.unreadMessageCount = db.prepare('SELECT COUNT(*) as c FROM contact_messages WHERE read = 0').get().c;
+  res.locals.unreadReportsCount = db.prepare('SELECT COUNT(*) as c FROM reports WHERE admin_unread = 1').get().c;
   next();
 });
 
@@ -467,6 +468,41 @@ router.post('/push/send', (req, res) => {
     : `${count} recipient${count === 1 ? '' : 's'} matched, but Apple Push credentials aren't configured yet (APN_TEAM_ID / APN_KEY_ID / APN_AUTH_KEY / APN_BUNDLE_ID) — nothing was actually delivered.`;
 
   res.render('admin/push', { title: 'Push notifications', counts: pushRecipientCounts(), configured: isPushConfigured(), error: null, success });
+});
+
+// Employer reports & suggestions
+function loadReportsForAdmin() {
+  const reports = db.prepare(`
+    SELECT r.*, u.name as employer_name, u.email as employer_email, u.company_name
+    FROM reports r JOIN users u ON u.id = r.employer_id
+    ORDER BY r.updated_at DESC
+  `).all();
+  reports.forEach(r => {
+    r.messages = db.prepare('SELECT * FROM report_messages WHERE report_id = ? ORDER BY created_at ASC').all(r.id);
+  });
+  return reports;
+}
+
+router.get('/reports', (req, res) => {
+  db.prepare('UPDATE reports SET admin_unread = 0').run();
+  res.render('admin/reports', { title: 'Reports & suggestions', reports: loadReportsForAdmin() });
+});
+
+router.post('/reports/:id/reply', (req, res) => {
+  const report = db.prepare('SELECT * FROM reports WHERE id = ?').get(req.params.id);
+  if (!report) return res.status(404).render('error', { title: 'Not found', message: 'Report not found.' });
+  const { message } = req.body;
+  if (message && message.trim()) {
+    db.prepare("INSERT INTO report_messages (report_id, sender_role, message) VALUES (?, 'admin', ?)").run(report.id, message.trim());
+    db.prepare("UPDATE reports SET employer_unread = 1, admin_unread = 0, updated_at = datetime('now') WHERE id = ?").run(report.id);
+  }
+  res.redirect('/admin/reports');
+});
+
+router.post('/reports/:id/status', (req, res) => {
+  const status = req.body.status === 'closed' ? 'closed' : 'open';
+  db.prepare('UPDATE reports SET status = ? WHERE id = ?').run(status, req.params.id);
+  res.redirect('/admin/reports');
 });
 
 // Pages CMS

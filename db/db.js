@@ -222,4 +222,28 @@ db.exec(`
   )
 `);
 
+// Employer reports & suggestions — two-way threaded conversation with admin
+db.exec(`
+  CREATE TABLE IF NOT EXISTS reports (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    employer_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type            TEXT NOT NULL DEFAULT 'suggestion' CHECK (type IN ('report', 'suggestion')),
+    subject         TEXT NOT NULL,
+    status          TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+    admin_unread    INTEGER NOT NULL DEFAULT 1,
+    employer_unread INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+db.exec(`
+  CREATE TABLE IF NOT EXISTS report_messages (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id   INTEGER NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+    sender_role TEXT NOT NULL CHECK (sender_role IN ('employer', 'admin')),
+    message     TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+
 module.exports = db;

@@ -1,0 +1,75 @@
+<%- include('../partials/admin-header') %>
+  <style>
+    .report-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 14px;
+      margin-bottom: 16px; overflow: hidden;
+    }
+    .report-card.unread { border-left: 4px solid var(--violet); }
+    .report-card-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+      background: var(--violet-bg);
+    }
+    .report-card-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .report-type-pill {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .report-type-pill.report { background: var(--danger-bg); color: var(--danger-dark); }
+    .report-type-pill.suggestion { background: var(--success-bg); color: var(--success-text); }
+    .report-card-subject { font-weight: 700; font-size: 0.92rem; color: var(--text); }
+    .report-card-from { font-size: 0.8rem; color: var(--muted); }
+    .report-card-actions { display: flex; align-items: center; gap: 8px; }
+    .report-status-pill {
+      font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; border: none; cursor: pointer; font-family: inherit;
+    }
+    .report-status-pill.open { background: #d1fae5; color: #065f46; }
+    .report-status-pill.closed { background: #e5e7eb; color: #4b5563; }
+
+    .report-thread { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .report-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 0.87rem; line-height: 1.5; }
+    .report-msg.admin { align-self: flex-end; background: var(--violet); color: #fff; border-bottom-right-radius: 4px; }
+    .report-msg.employer { align-self: flex-start; background: var(--border-light); color: var(--text); border-bottom-left-radius: 4px; }
+    .report-msg-meta { font-size: 0.7rem; opacity: 0.75; margin-top: 4px; }
+
+    .report-reply-form { padding: 0 20px 18px; display: flex; gap: 8px; }
+    .report-reply-form textarea { flex: 1; resize: vertical; min-height: 44px; }
+  </style>
+
+  <h1>Reports &amp; suggestions</h1>
+  <p class="subtitle">Messages submitted by employers. Replies are visible to them in their portal.</p>
+
+  <% if (reports.length === 0) { %>
+    <div class="empty-state"><p>No reports or suggestions submitted yet.</p></div>
+  <% } else { %>
+    <% reports.forEach(r => { %>
+      <div class="report-card <%= r.admin_unread ? 'unread' : '' %>">
+        <div class="report-card-head">
+          <div class="report-card-title">
+            <span class="report-type-pill <%= r.type %>"><%= r.type %></span>
+            <span class="report-card-subject"><%= r.subject %></span>
+            <span class="report-card-from">from <%= r.employer_name %> (<%= r.company_name || r.employer_email %>)</span>
+          </div>
+          <div class="report-card-actions">
+            <form class="inline-form" method="POST" action="/admin/reports/<%= r.id %>/status">
+              <input type="hidden" name="status" value="<%= r.status === 'open' ? 'closed' : 'open' %>">
+              <button class="report-status-pill <%= r.status %>" type="submit"><%= r.status %></button>
+            </form>
+          </div>
+        </div>
+        <div class="report-thread">
+          <% r.messages.forEach(m => { %>
+            <div class="report-msg <%= m.sender_role %>">
+              <%= m.message %>
+              <div class="report-msg-meta"><%= m.sender_role === 'admin' ? 'You' : r.employer_name %> &middot; <%= m.created_at.slice(0, 16).replace('T', ' ') %></div>
+            </div>
+          <% }) %>
+        </div>
+        <form class="report-reply-form" method="POST" action="/admin/reports/<%= r.id %>/reply">
+          <textarea name="message" placeholder="Reply to <%= r.employer_name %>…" required></textarea>
+          <button class="btn small" type="submit">Send</button>
+        </form>
+      </div>
+    <% }) %>
+  <% } %>
+<%- include('../partials/admin-footer') %>
