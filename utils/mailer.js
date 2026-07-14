@@ -10,6 +10,23 @@ function parseFromAddress() {
   return { address: raw.trim(), name: 'GTA Hiring' };
 }
 
+// HTML-only email (no plain-text part) is a well-known spam signal — mail
+// clients and filters expect a text/plain alternative alongside text/html.
+function htmlToText(html) {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi, '$2 ($1)')
+    .replace(/<\/(p|div|tr|h[1-6])>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&mdash;/g, '—')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s*\n\s*\n+/g, '\n\n')
+    .trim();
+}
+
 async function sendMail({ to, subject, html }) {
   if (!process.env.ZEPTOMAIL_TOKEN) return; // skip silently if not configured yet
   try {
@@ -24,6 +41,7 @@ async function sendMail({ to, subject, html }) {
         to: [{ email_address: { address: to } }],
         subject,
         htmlbody: html,
+        textbody: htmlToText(html),
       }),
     });
     if (!res.ok) {

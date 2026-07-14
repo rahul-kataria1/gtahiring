@@ -24,12 +24,12 @@ function wrap(body) {
         <!-- Footer -->
         <tr>
           <td style="background:#f8fafc;padding:20px 32px;border-top:1px solid #e2e8f0;text-align:center;">
-            <p style="margin:0;font-size:12px;color:#94a3b8;">
+            <p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">
               &copy; ${new Date().getFullYear()} GTA Hiring &mdash; Greater Toronto Area
               &nbsp;·&nbsp; <a href="${APP_URL()}/privacy" style="color:#94a3b8;">Privacy</a>
               &nbsp;·&nbsp; <a href="${APP_URL()}/contact" style="color:#94a3b8;">Contact</a>
             </p>
-            <!-- ← You can add your physical address here if required by CAN-SPAM -->
+            <p style="margin:0;font-size:12px;color:#94a3b8;">Toronto, ON, Canada</p>
           </td>
         </tr>
 
