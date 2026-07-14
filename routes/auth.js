@@ -1,22 +1,12 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const db = require('../db/db');
 const { requireAuth } = require('../middleware/auth');
 const { sendWelcomeEmail, sendVerificationEmail } = require('../utils/emails');
-
-const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
-
-function issueVerificationToken(userId) {
-  const token = crypto.randomBytes(32).toString('hex');
-  const expires = new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS).toISOString();
-  db.prepare('UPDATE users SET verification_token = ?, verification_token_expires = ? WHERE id = ?')
-    .run(token, expires, userId);
-  return token;
-}
+const { issueVerificationToken } = require('../utils/emailVerification');
 
 const router = express.Router();
 
@@ -234,8 +224,11 @@ router.post('/profile', requireAuth, (req, res) => {
     params.push(bcrypt.hashSync(new_password, 10));
   }
 
+  const currentUser = db.prepare('SELECT role, email FROM users WHERE id = ?').get(userId);
+  const newEmail = email.trim().toLowerCase();
+  const emailChanged = newEmail !== currentUser.email.toLowerCase();
+
   try {
-    const currentUser = db.prepare('SELECT role FROM users WHERE id = ?').get(userId);
     if (currentUser.role === 'employer') {
       params.push(company_name ? company_name.trim() : null);
       params.push(userId);
@@ -250,6 +243,22 @@ router.post('/profile', requireAuth, (req, res) => {
     }
   } catch (dbErr) {
     return res.redirect('/profile?error=' + encodeURIComponent('Could not save profile. Please restart the server and try again.'));
+  }
+
+  if (emailChanged) {
+    db.prepare('UPDATE users SET email_verified = 0 WHERE id = ?').run(userId);
+    const token = issueVerificationToken(userId);
+    sendVerificationEmail({ to: newEmail, name: name.trim(), token });
+    return req.session.destroy(() => {
+      res.locals.currentUser = null;
+      res.render('register', {
+        title: 'Check your email',
+        error: null,
+        form: {},
+        sent: true,
+        sentEmail: newEmail,
+      });
+    });
   }
 
   req.session.user = { ...req.session.user, name: name.trim() };

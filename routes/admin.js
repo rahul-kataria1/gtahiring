@@ -5,9 +5,10 @@ const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const db = require('../db/db');
 const { requireRole } = require('../middleware/auth');
-const { notifyEmployerJobStatus } = require('../utils/emails');
+const { notifyEmployerJobStatus, sendVerificationEmail } = require('../utils/emails');
 const { sendPushNotification, isPushConfigured } = require('../utils/push');
 const { notifyUser, notifyAdmins } = require('../utils/notifications');
+const { issueVerificationToken } = require('../utils/emailVerification');
 
 const imageUpload = multer({
   storage: multer.diskStorage({
@@ -259,6 +260,8 @@ router.post('/users/:id/profile', (req, res) => {
   }
 
   const newRole = ['seeker', 'employer', 'admin'].includes(role) ? role : user.role;
+  const newEmail = email.trim().toLowerCase();
+  const emailChanged = newEmail !== user.email.toLowerCase();
 
   let passwordClause = '';
   const params = [
@@ -299,7 +302,15 @@ router.post('/users/:id/profile', (req, res) => {
     return res.redirect(`${redirectBase}?error=${encodeURIComponent('Could not save profile.')}`);
   }
 
-  res.redirect(`${redirectBase}?success=1&msg=${encodeURIComponent('Profile updated.')}`);
+  let msg = 'Profile updated.';
+  if (emailChanged) {
+    db.prepare('UPDATE users SET email_verified = 0 WHERE id = ?').run(user.id);
+    const token = issueVerificationToken(user.id);
+    sendVerificationEmail({ to: newEmail, name: name.trim(), token });
+    msg = 'Profile updated. The new email must be re-verified — a verification link was sent.';
+  }
+
+  res.redirect(`${redirectBase}?success=1&msg=${encodeURIComponent(msg)}`);
 });
 
 router.post('/users/:id/toggle-review', (req, res) => {
