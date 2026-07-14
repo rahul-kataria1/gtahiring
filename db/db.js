@@ -86,6 +86,8 @@ try { db.exec('ALTER TABLE users ADD COLUMN verification_token_expires TEXT'); }
 try { db.exec('ALTER TABLE users ADD COLUMN free_posts_used INTEGER DEFAULT 0'); } catch (e) {}
 try { db.exec('ALTER TABLE jobs ADD COLUMN featured INTEGER DEFAULT 0'); } catch (e) {}
 try { db.exec('ALTER TABLE jobs ADD COLUMN featured_until TEXT'); } catch (e) {}
+// Analytics: last activity timestamp per user, for daily/weekly/monthly active user counts.
+try { db.exec('ALTER TABLE users ADD COLUMN last_seen_at TEXT'); } catch (e) {}
 
 // Key-value site settings
 db.exec(`
@@ -282,6 +284,17 @@ db.exec(`
     status                    TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed')),
     job_data                  TEXT,
     created_at                TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+
+// Live presence — one row per active browser session, pruned when stale.
+// Powers the real-time "active now" count on the admin analytics page.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS active_sessions (
+    session_id   TEXT PRIMARY KEY,
+    user_id      INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    role         TEXT,
+    last_seen_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
 

@@ -1,0 +1,222 @@
+<%- include('../partials/admin-header') %>
+<%
+  // Validated categorical palette (see dataviz skill): violet, cyan-dark, success,
+  // danger-dark, warning-dark — passes lightness/chroma/CVD/contrast checks together.
+  var C_SEEKER   = '#0057d8';
+  var C_EMPLOYER = '#009e99';
+  var C_GOOD     = '#00b894';
+  var C_BAD      = '#c04535';
+  var C_WARN     = '#c47800';
+
+  var CHART_H = 100; // px, max bar height
+  function barH(value, max) {
+    if (max <= 0) return 0;
+    return Math.max(value > 0 ? 3 : 0, Math.round((value / max) * CHART_H));
+  }
+  var maxSignup = Math.max(1, ...signupsByDay.map(d => d.seekers + d.employers));
+  var maxJobs = Math.max(1, ...jobsByDay.map(d => d.c));
+  var maxApps = Math.max(1, ...applicationsByDay.map(d => d.c));
+
+  var jobStatusMap = Object.fromEntries(jobStatusBreakdown.map(r => [r.status, r.c]));
+  var jobStatusTotal = jobStatusBreakdown.reduce((s, r) => s + r.c, 0) || 1;
+  var appStatusMap = Object.fromEntries(appStatusBreakdown.map(r => [r.status, r.c]));
+  var appStatusTotal = appStatusBreakdown.reduce((s, r) => s + r.c, 0) || 1;
+
+  var jobStatusColors = { pending: C_WARN, approved: C_GOOD, rejected: C_BAD };
+  var appStatusColors = { applied: C_SEEKER, reviewed: C_EMPLOYER, accepted: C_GOOD, rejected: C_BAD };
+
+  function fmtDay(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }); }
+%>
+<style>
+  .an-hero {
+    background: linear-gradient(135deg, #001f5b 0%, #0057d8 55%, #4a9af5 100%);
+    border-radius: 18px; padding: 26px 30px; margin-bottom: 22px;
+    display: flex; align-items: center; gap: 24px; flex-wrap: wrap; color: #fff;
+  }
+  .an-hero-live { display: flex; align-items: center; gap: 8px; }
+  .an-hero-dot {
+    width: 9px; height: 9px; border-radius: 50%; background: #34d399;
+    box-shadow: 0 0 0 0 rgba(52,211,153,0.6); animation: an-pulse 2s infinite;
+  }
+  @keyframes an-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(52,211,153,0.55); }
+    70%  { box-shadow: 0 0 0 8px rgba(52,211,153,0); }
+    100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+  }
+  .an-hero-value { font-size: 2.6rem; font-weight: 800; line-height: 1; }
+  .an-hero-label { font-size: 0.82rem; color: rgba(255,255,255,0.75); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .an-hero-breakdown { display: flex; gap: 18px; flex-wrap: wrap; margin-left: auto; }
+  .an-hero-breakdown-item { text-align: center; }
+  .an-hero-breakdown-item .v { font-size: 1.3rem; font-weight: 700; }
+  .an-hero-breakdown-item .l { font-size: 0.72rem; color: rgba(255,255,255,0.7); text-transform: capitalize; }
+
+  .an-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .an-kpi { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  .an-kpi-value { font-size: 1.5rem; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .an-kpi-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+
+  .an-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 20px; }
+  .an-card-head { padding: 16px 22px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .an-card-head h2 { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text); }
+  .an-card-body { padding: 20px 22px; }
+
+  .an-legend { display: flex; gap: 16px; font-size: 0.78rem; color: var(--muted); }
+  .an-legend-item { display: flex; align-items: center; gap: 6px; }
+  .an-legend-dot { width: 9px; height: 9px; border-radius: 2px; }
+
+  .an-chart { display: flex; align-items: flex-end; height: 100px; padding-bottom: 4px; }
+  .an-bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1 1 0; min-width: 0; cursor: default; }
+  .an-bar-seg { width: 60%; max-width: 14px; border-radius: 3px 3px 0 0; }
+  .an-bar-seg + .an-bar-seg { margin-bottom: 2px; border-radius: 3px; }
+  .an-chart-axis { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-top: 6px; }
+
+  .an-status-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+  .an-status-label { width: 90px; font-size: 0.84rem; font-weight: 600; color: var(--text); text-transform: capitalize; flex-shrink: 0; }
+  .an-status-track { flex: 1; height: 10px; background: var(--border-light); border-radius: 6px; overflow: hidden; }
+  .an-status-fill { height: 100%; border-radius: 6px; }
+  .an-status-value { width: 70px; text-align: right; font-size: 0.82rem; color: var(--muted); flex-shrink: 0; }
+
+  .an-table-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 0.88rem; }
+</style>
+
+<h1>Analytics</h1>
+<p class="subtitle">Live activity and 30-day trends across the platform.</p>
+
+<div class="an-hero">
+  <div>
+    <div class="an-hero-live">
+      <span class="an-hero-dot"></span>
+      <span class="an-hero-label">Active right now</span>
+    </div>
+    <div class="an-hero-value" id="anActiveNow"><%= activeNow %></div>
+  </div>
+  <div class="an-hero-breakdown" id="anActiveBreakdown">
+    <% activeByRole.forEach(r => { %>
+      <div class="an-hero-breakdown-item">
+        <div class="v"><%= r.c %></div>
+        <div class="l"><%= r.role %></div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
+<div class="an-kpi-row">
+  <div class="an-kpi"><div class="an-kpi-value"><%= totals.seekers %></div><div class="an-kpi-label">Job seekers</div></div>
+  <div class="an-kpi"><div class="an-kpi-value"><%= totals.employers %></div><div class="an-kpi-label">Employers</div></div>
+  <div class="an-kpi"><div class="an-kpi-value"><%= totals.verified %></div><div class="an-kpi-label">Verified accounts</div></div>
+  <div class="an-kpi"><div class="an-kpi-value"><%= totals.unverified %></div><div class="an-kpi-label">Unverified accounts</div></div>
+  <div class="an-kpi"><div class="an-kpi-value"><%= activity.dau %></div><div class="an-kpi-label">Active today</div></div>
+  <div class="an-kpi"><div class="an-kpi-value"><%= activity.wau %></div><div class="an-kpi-label">Active this week</div></div>
+  <div class="an-kpi"><div class="an-kpi-value"><%= activity.mau %></div><div class="an-kpi-label">Active this month</div></div>
+</div>
+
+<div class="an-card">
+  <div class="an-card-head">
+    <h2>Signups — last 30 days</h2>
+    <div class="an-legend">
+      <span class="an-legend-item"><span class="an-legend-dot" style="background:<%= C_SEEKER %>;"></span>Job seekers</span>
+      <span class="an-legend-item"><span class="an-legend-dot" style="background:<%= C_EMPLOYER %>;"></span>Employers</span>
+    </div>
+  </div>
+  <div class="an-card-body">
+    <div class="an-chart">
+      <% signupsByDay.forEach(d => { %>
+        <div class="an-bar-col" title="<%= fmtDay(d.day) %>: <%= d.seekers %> seekers, <%= d.employers %> employers">
+          <div class="an-bar-seg" style="height:<%= barH(d.employers, maxSignup) %>px;background:<%= C_EMPLOYER %>;"></div>
+          <div class="an-bar-seg" style="height:<%= barH(d.seekers, maxSignup) %>px;background:<%= C_SEEKER %>;"></div>
+        </div>
+      <% }) %>
+    </div>
+    <div class="an-chart-axis"><span><%= fmtDay(signupsByDay[0].day) %></span><span><%= fmtDay(signupsByDay[signupsByDay.length-1].day) %></span></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="an-card">
+    <div class="an-card-head"><h2>Jobs posted — last 30 days</h2></div>
+    <div class="an-card-body">
+      <div class="an-chart">
+        <% jobsByDay.forEach(d => { %>
+          <div class="an-bar-col" title="<%= fmtDay(d.day) %>: <%= d.c %> jobs">
+            <div class="an-bar-seg" style="height:<%= barH(d.c, maxJobs) %>px;background:<%= C_SEEKER %>;"></div>
+          </div>
+        <% }) %>
+      </div>
+      <div class="an-chart-axis"><span><%= fmtDay(jobsByDay[0].day) %></span><span><%= fmtDay(jobsByDay[jobsByDay.length-1].day) %></span></div>
+    </div>
+  </div>
+
+  <div class="an-card">
+    <div class="an-card-head"><h2>Applications — last 30 days</h2></div>
+    <div class="an-card-body">
+      <div class="an-chart">
+        <% applicationsByDay.forEach(d => { %>
+          <div class="an-bar-col" title="<%= fmtDay(d.day) %>: <%= d.c %> applications">
+            <div class="an-bar-seg" style="height:<%= barH(d.c, maxApps) %>px;background:<%= C_EMPLOYER %>;"></div>
+          </div>
+        <% }) %>
+      </div>
+      <div class="an-chart-axis"><span><%= fmtDay(applicationsByDay[0].day) %></span><span><%= fmtDay(applicationsByDay[applicationsByDay.length-1].day) %></span></div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="an-card">
+    <div class="an-card-head"><h2>Jobs by status</h2></div>
+    <div class="an-card-body">
+      <% ['pending', 'approved', 'rejected'].forEach(status => { var c = jobStatusMap[status] || 0; %>
+        <div class="an-status-row">
+          <div class="an-status-label"><%= status %></div>
+          <div class="an-status-track"><div class="an-status-fill" style="width:<%= Math.round(c / jobStatusTotal * 100) %>%;background:<%= jobStatusColors[status] %>;"></div></div>
+          <div class="an-status-value"><%= c %> (<%= Math.round(c / jobStatusTotal * 100) %>%)</div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <div class="an-card">
+    <div class="an-card-head"><h2>Applications by status</h2></div>
+    <div class="an-card-body">
+      <% ['applied', 'reviewed', 'accepted', 'rejected'].forEach(status => { var c = appStatusMap[status] || 0; %>
+        <div class="an-status-row">
+          <div class="an-status-label"><%= status %></div>
+          <div class="an-status-track"><div class="an-status-fill" style="width:<%= Math.round(c / appStatusTotal * 100) %>%;background:<%= appStatusColors[status] %>;"></div></div>
+          <div class="an-status-value"><%= c %> (<%= Math.round(c / appStatusTotal * 100) %>%)</div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<div class="an-card">
+  <div class="an-card-head"><h2>Top employers by jobs posted</h2></div>
+  <% if (topEmployers.length === 0) { %>
+    <div class="an-table-empty">No jobs posted yet.</div>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Employer</th><th>Company</th><th>Jobs posted</th></tr></thead>
+      <tbody>
+        <% topEmployers.forEach(e => { %>
+          <tr><td><%= e.name %></td><td><%= e.company_name || '—' %></td><td><%= e.job_count %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<script>
+  (function () {
+    function refresh() {
+      fetch('/admin/analytics/active-now').then(r => r.json()).then(data => {
+        document.getElementById('anActiveNow').textContent = data.total;
+        var wrap = document.getElementById('anActiveBreakdown');
+        wrap.innerHTML = data.byRole.map(function (r) {
+          return '<div class="an-hero-breakdown-item"><div class="v">' + r.c + '</div><div class="l">' + r.role + '</div></div>';
+        }).join('');
+      }).catch(function () {});
+    }
+    setInterval(refresh, 10000);
+  })();
+</script>
+<%- include('../partials/admin-footer') %>

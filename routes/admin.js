@@ -550,6 +550,94 @@ router.post('/push/send', (req, res) => {
   res.render('admin/push', { title: 'Push notifications', counts: pushRecipientCounts(), configured: isPushConfigured(), error: null, success });
 });
 
+// Analytics
+function pruneStaleSessions() {
+  db.prepare("DELETE FROM active_sessions WHERE last_seen_at < datetime('now', '-5 minutes')").run();
+}
+
+function activeNowSnapshot() {
+  pruneStaleSessions();
+  const total = db.prepare('SELECT COUNT(*) as c FROM active_sessions').get().c;
+  const byRole = db.prepare(`
+    SELECT COALESCE(role, 'guest') as role, COUNT(*) as c FROM active_sessions GROUP BY role
+  `).all();
+  return { total, byRole };
+}
+
+router.get('/analytics', (req, res) => {
+  const { total: activeNow, byRole: activeByRole } = activeNowSnapshot();
+
+  const totals = {
+    seekers: db.prepare("SELECT COUNT(*) as c FROM users WHERE role = 'seeker'").get().c,
+    employers: db.prepare("SELECT COUNT(*) as c FROM users WHERE role = 'employer'").get().c,
+    verified: db.prepare('SELECT COUNT(*) as c FROM users WHERE email_verified = 1').get().c,
+    unverified: db.prepare('SELECT COUNT(*) as c FROM users WHERE email_verified = 0').get().c,
+    totalJobs: db.prepare('SELECT COUNT(*) as c FROM jobs').get().c,
+    totalApplications: db.prepare('SELECT COUNT(*) as c FROM applications').get().c,
+  };
+
+  const activity = {
+    dau: db.prepare("SELECT COUNT(*) as c FROM users WHERE last_seen_at >= datetime('now', '-1 day')").get().c,
+    wau: db.prepare("SELECT COUNT(*) as c FROM users WHERE last_seen_at >= datetime('now', '-7 days')").get().c,
+    mau: db.prepare("SELECT COUNT(*) as c FROM users WHERE last_seen_at >= datetime('now', '-30 days')").get().c,
+  };
+
+  // Build a fixed 30-day day list so charts have no gaps for days with zero activity.
+  const days = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000);
+    days.push(d.toISOString().slice(0, 10));
+  }
+
+  function fillDays(rows, keyFn) {
+    const map = new Map(rows.map(r => [r.day, r]));
+    return days.map(day => ({ day, ...(map.get(day) || keyFn()) }));
+  }
+
+  const signupRows = db.prepare(`
+    SELECT date(created_at) as day,
+           SUM(CASE WHEN role = 'seeker' THEN 1 ELSE 0 END) as seekers,
+           SUM(CASE WHEN role = 'employer' THEN 1 ELSE 0 END) as employers
+    FROM users WHERE created_at >= datetime('now', '-30 days') GROUP BY day
+  `).all();
+  const signupsByDay = fillDays(signupRows, () => ({ seekers: 0, employers: 0 }));
+
+  const jobRows = db.prepare(`
+    SELECT date(created_at) as day, COUNT(*) as c FROM jobs
+    WHERE created_at >= datetime('now', '-30 days') GROUP BY day
+  `).all();
+  const jobsByDay = fillDays(jobRows, () => ({ c: 0 }));
+
+  const appRows = db.prepare(`
+    SELECT date(created_at) as day, COUNT(*) as c FROM applications
+    WHERE created_at >= datetime('now', '-30 days') GROUP BY day
+  `).all();
+  const applicationsByDay = fillDays(appRows, () => ({ c: 0 }));
+
+  const jobStatusBreakdown = db.prepare(`SELECT status, COUNT(*) as c FROM jobs GROUP BY status`).all();
+  const appStatusBreakdown = db.prepare(`SELECT status, COUNT(*) as c FROM applications GROUP BY status`).all();
+
+  const topEmployers = db.prepare(`
+    SELECT u.name, u.company_name, COUNT(j.id) as job_count
+    FROM users u JOIN jobs j ON j.employer_id = u.id
+    WHERE u.role = 'employer'
+    GROUP BY u.id ORDER BY job_count DESC LIMIT 5
+  `).all();
+
+  res.render('admin/analytics', {
+    title: 'Analytics',
+    activeNow, activeByRole,
+    totals, activity,
+    signupsByDay, jobsByDay, applicationsByDay,
+    jobStatusBreakdown, appStatusBreakdown,
+    topEmployers,
+  });
+});
+
+router.get('/analytics/active-now', (req, res) => {
+  res.json(activeNowSnapshot());
+});
+
 // Billing — pricing config + payment transaction log
 router.get('/billing', (req, res) => {
   const payments = db.prepare(`
