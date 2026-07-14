@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const bcrypt = require('bcryptjs');
 const db = require('../db/db');
 const { requireRole } = require('../middleware/auth');
 const { notifyEmployerJobStatus } = require('../utils/emails');
@@ -245,7 +246,7 @@ router.post('/users/:id/profile', (req, res) => {
   const user = db.prepare("SELECT * FROM users WHERE id = ? AND role != 'admin'").get(req.params.id);
   if (!user) return res.status(404).render('error', { title: 'Not found', message: 'User not found.' });
 
-  const { name, email, company_name, phone, address, city, province, postal_code } = req.body;
+  const { name, email, role, company_name, phone, address, city, province, postal_code, new_password, confirm_password } = req.body;
   const redirectBase = `/admin/users/${user.id}`;
 
   if (!name || !name.trim() || !email || !email.trim()) {
@@ -257,9 +258,13 @@ router.post('/users/:id/profile', (req, res) => {
     return res.redirect(`${redirectBase}?error=${encodeURIComponent('That email is already in use by another account.')}`);
   }
 
+  const newRole = ['seeker', 'employer', 'admin'].includes(role) ? role : user.role;
+
+  let passwordClause = '';
   const params = [
     name.trim(),
     email.trim().toLowerCase(),
+    newRole,
     phone       ? phone.trim()       : null,
     address     ? address.trim()     : null,
     city        ? city.trim()        : null,
@@ -267,16 +272,27 @@ router.post('/users/:id/profile', (req, res) => {
     postal_code ? postal_code.trim().toUpperCase() : null,
   ];
 
+  if (new_password) {
+    if (new_password !== confirm_password) {
+      return res.redirect(`${redirectBase}?error=${encodeURIComponent('Passwords do not match.')}`);
+    }
+    if (new_password.length < 6) {
+      return res.redirect(`${redirectBase}?error=${encodeURIComponent('Password must be at least 6 characters.')}`);
+    }
+    passwordClause = ', password = ?';
+    params.push(bcrypt.hashSync(new_password, 10));
+  }
+
   try {
-    if (user.role === 'employer') {
+    if (newRole === 'employer') {
       params.push(company_name ? company_name.trim() : null, user.id);
       db.prepare(
-        'UPDATE users SET name=?, email=?, phone=?, address=?, city=?, province=?, postal_code=?, company_name=? WHERE id=?'
+        `UPDATE users SET name=?, email=?, role=?, phone=?, address=?, city=?, province=?, postal_code=?${passwordClause}, company_name=? WHERE id=?`
       ).run(...params);
     } else {
       params.push(user.id);
       db.prepare(
-        'UPDATE users SET name=?, email=?, phone=?, address=?, city=?, province=?, postal_code=? WHERE id=?'
+        `UPDATE users SET name=?, email=?, role=?, phone=?, address=?, city=?, province=?, postal_code=?${passwordClause} WHERE id=?`
       ).run(...params);
     }
   } catch (dbErr) {

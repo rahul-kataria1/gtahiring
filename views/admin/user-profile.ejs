@@ -180,6 +180,18 @@
           <input id="up-email" name="email" type="email" value="<%= u.email %>" required>
         </div>
         <div class="field">
+          <label for="up-role">Role</label>
+          <select id="up-role" name="role">
+            <option value="seeker" <%= u.role === 'seeker' ? 'selected' : '' %>>Job seeker</option>
+            <option value="employer" <%= u.role === 'employer' ? 'selected' : '' %>>Employer</option>
+            <option value="admin" <%= u.role === 'admin' ? 'selected' : '' %>>Admin</option>
+          </select>
+        </div>
+        <div class="field" id="up-company-field" style="<%= u.role === 'employer' ? '' : 'display:none;' %>">
+          <label for="up-company">Company</label>
+          <input id="up-company" name="company_name" type="text" value="<%= u.company_name || '' %>">
+        </div>
+        <div class="field">
           <label for="up-phone">Phone</label>
           <input id="up-phone" name="phone" type="text" value="<%= u.phone || '' %>">
         </div>
@@ -199,12 +211,14 @@
           <label for="up-postal">Postal code</label>
           <input id="up-postal" name="postal_code" type="text" value="<%= u.postal_code || '' %>">
         </div>
-        <% if (u.role === 'employer') { %>
-          <div class="field">
-            <label for="up-company">Company</label>
-            <input id="up-company" name="company_name" type="text" value="<%= u.company_name || '' %>">
-          </div>
-        <% } %>
+        <div class="field">
+          <label for="up-new-password">New password</label>
+          <input id="up-new-password" name="new_password" type="password" placeholder="Leave blank to keep current" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label for="up-confirm-password">Confirm new password</label>
+          <input id="up-confirm-password" name="confirm_password" type="password" placeholder="Repeat new password" autocomplete="new-password">
+        </div>
       </div>
       <button class="btn" type="submit" style="margin-top:6px;">Save changes</button>
     </form>
@@ -280,5 +294,16 @@
     </form>
   </div>
 </div>
+
+<script>
+  (function () {
+    var roleSelect = document.getElementById('up-role');
+    var companyField = document.getElementById('up-company-field');
+    if (!roleSelect || !companyField) return;
+    roleSelect.addEventListener('change', function () {
+      companyField.style.display = roleSelect.value === 'employer' ? '' : 'none';
+    });
+  })();
+</script>
 
 <%- include('../partials/admin-footer') %>
