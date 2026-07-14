@@ -34,18 +34,6 @@ app.set('views', path.join(__dirname, 'views'));
 // must be mounted before the general urlencoded body parser below.
 app.use('/stripe', stripeWebhookRoutes);
 
-// The site moved from jobs.gtahiring.com to the apex domain — redirect the
-// old subdomain permanently (301, path/query preserved) so existing links,
-// bookmarks, and search rankings carry over instead of breaking.
-const OLD_HOST = 'jobs.gtahiring.com';
-app.use((req, res, next) => {
-  if (req.hostname === OLD_HOST) {
-    const canonical = process.env.APP_URL || 'https://gtahiring.com';
-    return res.redirect(301, `${canonical}${req.originalUrl}`);
-  }
-  next();
-});
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
