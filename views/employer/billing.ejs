@@ -1,0 +1,62 @@
+<%- include('../partials/employer-header') %>
+  <style>
+    .bill-summary {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;
+      margin-bottom: 24px;
+    }
+    .bill-stat {
+      background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px;
+    }
+    .bill-stat-value { font-size: 1.5rem; font-weight: 800; color: var(--violet-dark); line-height: 1; margin-bottom: 4px; }
+    .bill-stat-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+    .bill-type-pill {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .bill-type-pill.job_post { background: var(--violet-bg); color: var(--violet-dark); }
+    .bill-type-pill.featured { background: #fef3c7; color: #92400e; }
+    .bill-status-pill { font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .bill-status-pill.paid { background: #d1fae5; color: #065f46; }
+    .bill-status-pill.pending { background: #fef3c7; color: #92400e; }
+    .bill-status-pill.failed { background: #fee2e2; color: #991b1b; }
+  </style>
+
+  <h1>Billing</h1>
+  <p class="subtitle">Your job post quota and payment history.</p>
+
+  <div class="bill-summary">
+    <div class="bill-stat">
+      <div class="bill-stat-value"><%= freeRemaining %></div>
+      <div class="bill-stat-label">Free posts remaining</div>
+    </div>
+    <div class="bill-stat">
+      <div class="bill-stat-value">$<%= (pricing.jobPostPriceCents / 100).toFixed(2) %></div>
+      <div class="bill-stat-label">Price per post after free posts</div>
+    </div>
+    <div class="bill-stat">
+      <div class="bill-stat-value">$<%= (pricing.featuredPriceCents / 100).toFixed(2) %></div>
+      <div class="bill-stat-label">Featured listing (<%= pricing.featuredDurationDays %> days)</div>
+    </div>
+  </div>
+
+  <% if (payments.length === 0) { %>
+    <div class="empty-state"><p>No payments yet.</p></div>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr><th>Type</th><th>Job</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        <% payments.forEach(p => { %>
+          <tr>
+            <td><span class="bill-type-pill <%= p.type %>"><%= p.type === 'job_post' ? 'Job post' : 'Featured' %></span></td>
+            <td><%- p.job_id ? `<a href="/jobs/${p.job_id}">View listing</a>` : '—' %></td>
+            <td>$<%= (p.amount_cents / 100).toFixed(2) %> <%= p.currency.toUpperCase() %></td>
+            <td><span class="bill-status-pill <%= p.status %>"><%= p.status %></span></td>
+            <td><%= p.created_at.slice(0, 16).replace('T', ' ') %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+<%- include('../partials/employer-footer') %>

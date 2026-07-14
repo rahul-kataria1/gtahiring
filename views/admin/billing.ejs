@@ -1,0 +1,118 @@
+<%- include('../partials/admin-header') %>
+  <style>
+    .bill-summary {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px;
+      margin-bottom: 24px;
+    }
+    .bill-stat {
+      background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px;
+    }
+    .bill-stat-value { font-size: 1.5rem; font-weight: 800; color: var(--violet-dark); line-height: 1; margin-bottom: 4px; }
+    .bill-stat-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+
+    .pricing-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden; margin-bottom: 24px; max-width: 720px;
+    }
+    .pricing-card-head { padding: 18px 24px 14px; border-bottom: 1px solid var(--border-light); }
+    .pricing-card-head h2 { margin: 0 0 2px; font-size: 1rem; }
+    .pricing-card-head p { margin: 0; font-size: 0.82rem; color: var(--muted); }
+    .pricing-card-body { padding: 20px 24px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+
+    .bill-type-pill {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .bill-type-pill.job_post { background: var(--violet-bg); color: var(--violet-dark); }
+    .bill-type-pill.featured { background: #fef3c7; color: #92400e; }
+    .bill-status-pill { font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .bill-status-pill.paid { background: #d1fae5; color: #065f46; }
+    .bill-status-pill.pending { background: #fef3c7; color: #92400e; }
+    .bill-status-pill.failed { background: #fee2e2; color: #991b1b; }
+  </style>
+
+  <h1>Billing</h1>
+  <p class="subtitle">Job post pricing and payment history across all employers.</p>
+
+  <% if (!configured) { %>
+    <div class="alert" style="margin-bottom:20px;background:var(--warning-bg);color:var(--warning-dark);border:1px solid var(--warning);">
+      Stripe isn't configured yet (STRIPE_SECRET_KEY is missing on the server). Employers past their free posts
+      won't be able to check out until it's set.
+    </div>
+  <% } %>
+  <% if (error) { %><div class="alert error" style="margin-bottom:20px;"><%= error %></div><% } %>
+  <% if (success) { %><div class="alert success" style="margin-bottom:20px;"><%= success %></div><% } %>
+
+  <div class="bill-summary">
+    <div class="bill-stat">
+      <div class="bill-stat-value">$<%= (totals.revenue_cents / 100).toFixed(2) %></div>
+      <div class="bill-stat-label">Total revenue (CAD)</div>
+    </div>
+    <div class="bill-stat">
+      <div class="bill-stat-value"><%= totals.paid_posts %></div>
+      <div class="bill-stat-label">Paid job posts</div>
+    </div>
+    <div class="bill-stat">
+      <div class="bill-stat-value"><%= totals.paid_featured %></div>
+      <div class="bill-stat-label">Featured upsells sold</div>
+    </div>
+  </div>
+
+  <div class="pricing-card">
+    <div class="pricing-card-head">
+      <h2>Pricing</h2>
+      <p>Applies to all employers going forward. Currency is fixed at CAD.</p>
+    </div>
+    <div class="pricing-card-body">
+      <form method="POST" action="/admin/billing/pricing">
+        <div class="pricing-grid">
+          <div class="field">
+            <label for="job_post_price">Price per job post ($)</label>
+            <input id="job_post_price" name="job_post_price" type="number" step="0.01" min="0"
+              value="<%= (pricing.jobPostPriceCents / 100).toFixed(2) %>" required>
+          </div>
+          <div class="field">
+            <label for="featured_price">Featured listing price ($)</label>
+            <input id="featured_price" name="featured_price" type="number" step="0.01" min="0"
+              value="<%= (pricing.featuredPriceCents / 100).toFixed(2) %>" required>
+          </div>
+          <div class="field">
+            <label for="featured_duration_days">Featured duration (days)</label>
+            <input id="featured_duration_days" name="featured_duration_days" type="number" step="1" min="1"
+              value="<%= pricing.featuredDurationDays %>" required>
+          </div>
+          <div class="field">
+            <label for="free_posts_limit">Free posts per employer</label>
+            <input id="free_posts_limit" name="free_posts_limit" type="number" step="1" min="0"
+              value="<%= pricing.freePostsLimit %>" required>
+          </div>
+        </div>
+        <button class="btn" type="submit">Save pricing</button>
+      </form>
+    </div>
+  </div>
+
+  <h2 style="margin-bottom:14px;">Transactions</h2>
+  <% if (payments.length === 0) { %>
+    <div class="empty-state"><p>No payments yet.</p></div>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr><th>Employer</th><th>Type</th><th>Job</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        <% payments.forEach(p => { %>
+          <tr>
+            <td><%= p.employer_name %><br><span style="color:var(--muted);font-size:0.8rem;"><%= p.employer_email %></span></td>
+            <td><span class="bill-type-pill <%= p.type %>"><%= p.type === 'job_post' ? 'Job post' : 'Featured' %></span></td>
+            <td><%- p.job_id ? `<a href="/jobs/${p.job_id}">${p.job_title || 'View listing'}</a>` : '—' %></td>
+            <td>$<%= (p.amount_cents / 100).toFixed(2) %> <%= p.currency.toUpperCase() %></td>
+            <td><span class="bill-status-pill <%= p.status %>"><%= p.status %></span></td>
+            <td><%= p.created_at.slice(0, 16).replace('T', ' ') %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+<%- include('../partials/admin-footer') %>

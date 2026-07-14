@@ -19,6 +19,7 @@
     }
     .pill-salary { background: rgba(253,203,110,0.25); color: #ffe599; border-color: rgba(253,203,110,0.4); }
     .pill-closed { background: rgba(239,68,68,0.25); color: #fca5a5; border-color: rgba(239,68,68,0.4); }
+    .pill-featured { background: rgba(253,203,110,0.35); color: #ffe599; border-color: rgba(253,203,110,0.55); font-weight: 700; }
 
     /* ── Two-column layout ────────────────────────── */
     .job-layout {
@@ -142,6 +143,9 @@
     <h1><%= job.title %></h1>
     <p class="job-hero-company"><%= job.company %></p>
     <div class="job-pills">
+      <% if (job.featured === 1 && (!job.featured_until || new Date(job.featured_until) > new Date())) { %>
+        <span class="job-pill pill-featured">★ Featured</span>
+      <% } %>
       <span class="job-pill">📍 <%= job.location %></span>
       <span class="job-pill"><%= job.job_type %></span>
       <% if (job.salary) { %><span class="job-pill pill-salary">💰 <%= job.salary %></span><% } %>

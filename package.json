@@ -15,7 +15,8 @@
     "express-session": "^1.18.0",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
-    "node-sqlite3-wasm": "^0.8.59"
+    "node-sqlite3-wasm": "^0.8.59",
+    "stripe": "^22.3.1"
   },
   "optionalDependencies": {
     "better-sqlite3": "^11.10.0"

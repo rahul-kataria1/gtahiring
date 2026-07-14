@@ -213,6 +213,21 @@
       border-radius: 20px;
       margin-top: 5px;
     }
+    .featured-badge {
+      display: inline-block;
+      background: linear-gradient(90deg, #fdcb6e, #f39c12);
+      color: #7a4a00;
+      font-size: 0.64rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 20px;
+      margin-top: 5px;
+    }
+    .job-card.is-featured { border-color: #f5c451; background: linear-gradient(135deg, #fffdf6 0%, #fff 60%); }
+    .job-card.is-featured::before { background: linear-gradient(180deg, #fdcb6e, #f39c12); }
+    .job-card.is-featured:hover::before { background: linear-gradient(180deg, #fdcb6e, #f39c12); }
 
     /* ── Pills ───────────────────────────────────────────────── */
     .job-pills {
@@ -337,8 +352,9 @@
       var daysSince = Math.floor((Date.now() - new Date(job.created_at)) / 86400000);
       var isNew = daysSince <= 3;
       var isRemote = /remote/i.test(job.location);
+      var isFeatured = job.featured === 1 && (!job.featured_until || new Date(job.featured_until) > new Date());
     %>
-      <div class="job-card">
+      <div class="job-card <%= isFeatured ? 'is-featured' : '' %>">
         <div class="job-card-inner">
           <div class="job-card-top">
             <!-- Company logo / employer avatar -->
@@ -359,6 +375,9 @@
             <!-- Date + badges -->
             <div class="job-card-date-wrap">
               <div class="job-card-date"><time data-timeago="<%= job.created_at %>"></time></div>
+              <% if (isFeatured) { %>
+                <div class="featured-badge">★ Featured</div>
+              <% } %>
               <% if (job.active === 0) { %>
                 <div style="display:inline-block;background:#fee2e2;color:#991b1b;font-size:0.64rem;font-weight:800;letter-spacing:0.07em;text-transform:uppercase;padding:3px 9px;border-radius:20px;margin-top:5px;">Closed</div>
               <% } else if (isNew) { %>

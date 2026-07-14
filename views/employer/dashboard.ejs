@@ -99,6 +99,16 @@
   </div>
   <p class="subtitle">New jobs are reviewed by the admin before they go live.</p>
 
+  <% if (paid) { %>
+    <div class="alert success" style="margin-bottom:20px;">Payment received — your job post is now awaiting review.</div>
+  <% } %>
+  <% if (featuredJustPurchased) { %>
+    <div class="alert success" style="margin-bottom:20px;">Your listing is now featured!</div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert error" style="margin-bottom:20px;"><%= error %></div>
+  <% } %>
+
   <% if (totalNew > 0) { %>
     <div class="notif-banner">
       <div class="notif-banner-icon">
@@ -111,7 +121,8 @@
     </div>
   <% } %>
 
-  <a class="btn" href="/employer/jobs/new" style="margin-bottom: 24px; display: inline-block;">+ Post a new job</a>
+  <a class="btn" href="/employer/jobs/new" style="margin-bottom: 12px; display: inline-block;">+ Post a new job</a>
+  <a class="btn outline" href="/employer/billing" style="margin-bottom: 24px; margin-left: 8px; display: inline-block;">💳 Billing</a>
 
   <% if (jobs.length === 0) { %>
     <div class="empty-state">
@@ -123,9 +134,14 @@
         <tr><th>Title</th><th>Status</th><th>Applications</th><th>Applicants</th><th>Posted</th><th></th></tr>
       </thead>
       <tbody>
-        <% jobs.forEach(job => { %>
+        <% jobs.forEach(job => {
+          var isFeatured = job.featured === 1 && (!job.featured_until || new Date(job.featured_until) > new Date());
+        %>
           <tr>
-            <td><a href="/jobs/<%= job.id %>" style="color:var(--text);font-weight:600;"><%= job.title %></a></td>
+            <td>
+              <a href="/jobs/<%= job.id %>" style="color:var(--text);font-weight:600;"><%= job.title %></a>
+              <% if (isFeatured) { %><span style="display:inline-block;margin-left:6px;background:#fef3c7;color:#92400e;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;">★ Featured</span><% } %>
+            </td>
             <td><span class="badge <%= job.status %>"><%= job.status %></span></td>
             <td>
               <form class="inline-form" method="POST" action="/employer/jobs/<%= job.id %>/toggle-active">
@@ -146,6 +162,11 @@
             <td><time data-timeago="<%= job.created_at %>" title="<%= job.created_at.slice(0, 10) %>"></time></td>
             <td class="actions">
               <a class="btn small outline" href="/employer/jobs/<%= job.id %>/edit">Edit</a>
+              <% if (!isFeatured && job.status === 'approved') { %>
+                <form class="inline-form" method="POST" action="/employer/jobs/<%= job.id %>/feature" onsubmit="return confirm('Feature this listing for <%= pricing.featuredDurationDays %> days for $<%= (pricing.featuredPriceCents / 100).toFixed(2) %>?');">
+                  <button class="btn small" type="submit" style="background:#f39c12;">★ Feature</button>
+                </form>
+              <% } %>
               <form class="inline-form" method="POST" action="/employer/jobs/<%= job.id %>/delete" onsubmit="return confirm('Delete this job posting?');">
                 <button class="btn small danger" type="submit">Delete</button>
               </form>

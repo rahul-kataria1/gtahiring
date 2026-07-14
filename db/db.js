@@ -82,6 +82,10 @@ try { db.exec('ALTER TABLE users ADD COLUMN require_review INTEGER DEFAULT 1'); 
 try { db.exec('ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 1'); } catch (e) {}
 try { db.exec('ALTER TABLE users ADD COLUMN verification_token TEXT'); } catch (e) {}
 try { db.exec('ALTER TABLE users ADD COLUMN verification_token_expires TEXT'); } catch (e) {}
+// Job post billing: how many of an employer's free posts they've used.
+try { db.exec('ALTER TABLE users ADD COLUMN free_posts_used INTEGER DEFAULT 0'); } catch (e) {}
+try { db.exec('ALTER TABLE jobs ADD COLUMN featured INTEGER DEFAULT 0'); } catch (e) {}
+try { db.exec('ALTER TABLE jobs ADD COLUMN featured_until TEXT'); } catch (e) {}
 
 // Key-value site settings
 db.exec(`
@@ -93,6 +97,11 @@ db.exec(`
 db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('require_job_review', '1')").run();
 db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('blog_per_page', '10')").run();
 db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('ads_enabled', '1')").run();
+// Job post billing — prices in cents CAD.
+db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('job_post_price_cents', '999')").run();
+db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('featured_price_cents', '499')").run();
+db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('featured_duration_days', '7')").run();
+db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('free_posts_limit', '50')").run();
 
 // Pages CMS table
 db.exec(`
@@ -256,6 +265,23 @@ db.exec(`
     url        TEXT,
     read       INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+
+// Stripe payments — job post fees and featured-listing upsells
+db.exec(`
+  CREATE TABLE IF NOT EXISTS payments (
+    id                        INTEGER PRIMARY KEY AUTOINCREMENT,
+    employer_id               INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    job_id                    INTEGER REFERENCES jobs(id) ON DELETE SET NULL,
+    type                      TEXT NOT NULL CHECK (type IN ('job_post', 'featured')),
+    amount_cents              INTEGER NOT NULL,
+    currency                  TEXT NOT NULL DEFAULT 'cad',
+    stripe_checkout_session_id TEXT UNIQUE,
+    stripe_payment_intent_id  TEXT,
+    status                    TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed')),
+    job_data                  TEXT,
+    created_at                TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
 

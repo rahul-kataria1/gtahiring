@@ -9,6 +9,7 @@ const { notifyEmployerJobStatus, sendVerificationEmail } = require('../utils/ema
 const { sendPushNotification, isPushConfigured } = require('../utils/push');
 const { notifyUser, notifyAdmins } = require('../utils/notifications');
 const { issueVerificationToken } = require('../utils/emailVerification');
+const { getPricing } = require('../utils/billing');
 
 const imageUpload = multer({
   storage: multer.diskStorage({
@@ -547,6 +548,55 @@ router.post('/push/send', (req, res) => {
     : `${count} recipient${count === 1 ? '' : 's'} matched, but Apple Push credentials aren't configured yet (APN_TEAM_ID / APN_KEY_ID / APN_AUTH_KEY / APN_BUNDLE_ID) — nothing was actually delivered.`;
 
   res.render('admin/push', { title: 'Push notifications', counts: pushRecipientCounts(), configured: isPushConfigured(), error: null, success });
+});
+
+// Billing — pricing config + payment transaction log
+router.get('/billing', (req, res) => {
+  const payments = db.prepare(`
+    SELECT p.*, u.name as employer_name, u.email as employer_email, j.title as job_title
+    FROM payments p
+    JOIN users u ON u.id = p.employer_id
+    LEFT JOIN jobs j ON j.id = p.job_id
+    ORDER BY p.created_at DESC
+  `).all();
+
+  const totals = db.prepare(`
+    SELECT
+      COALESCE(SUM(CASE WHEN status = 'paid' THEN amount_cents ELSE 0 END), 0) as revenue_cents,
+      COALESCE(SUM(CASE WHEN status = 'paid' AND type = 'job_post' THEN 1 ELSE 0 END), 0) as paid_posts,
+      COALESCE(SUM(CASE WHEN status = 'paid' AND type = 'featured' THEN 1 ELSE 0 END), 0) as paid_featured
+    FROM payments
+  `).get();
+
+  res.render('admin/billing', {
+    title: 'Billing',
+    payments,
+    totals,
+    pricing: getPricing(),
+    configured: !!process.env.STRIPE_SECRET_KEY,
+    error: req.query.error || null,
+    success: req.query.success === '1' ? 'Pricing updated.' : null,
+  });
+});
+
+router.post('/billing/pricing', (req, res) => {
+  const { job_post_price, featured_price, featured_duration_days, free_posts_limit } = req.body;
+
+  const jobPostCents = Math.round(parseFloat(job_post_price) * 100);
+  const featuredCents = Math.round(parseFloat(featured_price) * 100);
+  const durationDays = parseInt(featured_duration_days, 10);
+  const freeLimit = parseInt(free_posts_limit, 10);
+
+  if (!jobPostCents || jobPostCents < 0 || !featuredCents || featuredCents < 0 || !durationDays || durationDays < 1 || isNaN(freeLimit) || freeLimit < 0) {
+    return res.redirect('/admin/billing?error=' + encodeURIComponent('Please enter valid prices, duration, and free post limit.'));
+  }
+
+  db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('job_post_price_cents', ?)").run(String(jobPostCents));
+  db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('featured_price_cents', ?)").run(String(featuredCents));
+  db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('featured_duration_days', ?)").run(String(durationDays));
+  db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('free_posts_limit', ?)").run(String(freeLimit));
+
+  res.redirect('/admin/billing?success=1');
 });
 
 // Employer reports & suggestions

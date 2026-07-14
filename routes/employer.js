@@ -4,6 +4,14 @@ const { requireRole } = require('../middleware/auth');
 const { notifySeekerStatusChange } = require('../utils/emails');
 const { sendPushNotification } = require('../utils/push');
 const { notifyUser, notifyAdmins } = require('../utils/notifications');
+const { getStripe } = require('../utils/stripe');
+const {
+  getPricing,
+  freePostsRemaining,
+  createJobPostCheckout,
+  createFeaturedCheckout,
+  fulfillCheckoutSession,
+} = require('../utils/billing');
 
 const router = express.Router();
 router.use(requireRole('employer'));
@@ -38,32 +46,104 @@ router.get('/dashboard', (req, res) => {
   const newMap   = Object.fromEntries(counts.map((c) => [c.job_id, c.new_count || 0]));
   const totalNew = counts.reduce((sum, c) => sum + (c.new_count || 0), 0);
 
-  res.render('employer/dashboard', { title: 'My job postings', jobs, countMap, newMap, totalNew, q });
+  res.render('employer/dashboard', {
+    title: 'My job postings',
+    jobs, countMap, newMap, totalNew, q,
+    pricing: getPricing(),
+    paid: req.query.paid === '1',
+    featuredJustPurchased: req.query.featured === '1',
+    error: req.query.error || null,
+  });
 });
 
 router.get('/jobs/new', (req, res) => {
-  res.render('employer/new-job', { title: 'Post a job', error: null, form: {} });
+  const pricing = getPricing();
+  res.render('employer/new-job', {
+    title: 'Post a job',
+    error: null,
+    form: {},
+    freeRemaining: freePostsRemaining(req.session.user.id),
+    pricing,
+    cancelled: req.query.cancelled === '1',
+  });
 });
 
-router.post('/jobs/new', (req, res) => {
+router.post('/jobs/new', async (req, res) => {
   const { title, company, location, job_type, salary, description } = req.body;
+  const pricing = getPricing();
+
   if (!title || !company || !location || !description) {
     return res.render('employer/new-job', {
       title: 'Post a job',
       error: 'Please fill in all required fields.',
       form: req.body,
+      freeRemaining: freePostsRemaining(req.session.user.id),
+      pricing,
+      cancelled: false,
     });
   }
 
-  const employer = db.prepare('SELECT require_review FROM users WHERE id = ?').get(req.session.user.id);
-  const jobStatus = (employer && employer.require_review === 0) ? 'approved' : 'pending';
+  const jobData = { title, company, location, job_type: job_type || 'Full-time', salary: salary || null, description };
 
-  db.prepare(
-    `INSERT INTO jobs (employer_id, title, company, location, job_type, salary, description, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(req.session.user.id, title, company, location, job_type || 'Full-time', salary || null, description, jobStatus);
+  // Free quota still has room — post immediately, no payment needed.
+  if (freePostsRemaining(req.session.user.id) > 0) {
+    const employer = db.prepare('SELECT require_review FROM users WHERE id = ?').get(req.session.user.id);
+    const jobStatus = (employer && employer.require_review === 0) ? 'approved' : 'pending';
 
-  res.redirect('/employer/dashboard');
+    db.prepare(
+      `INSERT INTO jobs (employer_id, title, company, location, job_type, salary, description, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(req.session.user.id, title, company, location, jobData.job_type, jobData.salary, description, jobStatus);
+    db.prepare('UPDATE users SET free_posts_used = free_posts_used + 1 WHERE id = ?').run(req.session.user.id);
+
+    return res.redirect('/employer/dashboard');
+  }
+
+  // Free posts used up — pay per post.
+  if (!getStripe()) {
+    return res.render('employer/new-job', {
+      title: 'Post a job',
+      error: "You've used all your free job posts, and payments aren't configured yet. Contact the site admin.",
+      form: req.body,
+      freeRemaining: 0,
+      pricing,
+      cancelled: false,
+    });
+  }
+
+  try {
+    const session = await createJobPostCheckout(req.session.user, jobData);
+    res.redirect(session.url);
+  } catch (err) {
+    console.error('[stripe] job post checkout failed:', err.message);
+    res.render('employer/new-job', {
+      title: 'Post a job',
+      error: 'Could not start checkout. Please try again.',
+      form: req.body,
+      freeRemaining: 0,
+      pricing,
+      cancelled: false,
+    });
+  }
+});
+
+router.get('/jobs/payment/success', async (req, res) => {
+  const stripe = getStripe();
+  const sessionId = req.query.session_id;
+  if (!stripe || !sessionId) return res.redirect('/employer/dashboard');
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    fulfillCheckoutSession(session);
+  } catch (err) {
+    console.error('[stripe] could not verify session:', err.message);
+  }
+
+  res.redirect('/employer/dashboard?paid=1');
+});
+
+router.get('/jobs/payment/cancel', (req, res) => {
+  res.redirect('/employer/jobs/new?cancelled=1');
 });
 
 router.get('/jobs/:id/edit', (req, res) => {
@@ -185,6 +265,50 @@ router.post('/jobs/:id/toggle-active', (req, res) => {
 router.post('/jobs/:id/delete', (req, res) => {
   db.prepare('DELETE FROM jobs WHERE id = ? AND employer_id = ?').run(req.params.id, req.session.user.id);
   res.redirect('/employer/dashboard');
+});
+
+// Featured listing upsell
+router.post('/jobs/:id/feature', async (req, res) => {
+  const job = db.prepare('SELECT * FROM jobs WHERE id = ? AND employer_id = ?').get(req.params.id, req.session.user.id);
+  if (!job) return res.status(404).render('error', { title: 'Not found', message: 'Job not found.' });
+
+  if (!getStripe()) {
+    return res.redirect('/employer/dashboard?error=' + encodeURIComponent('Payments are not configured yet. Contact the site admin.'));
+  }
+
+  try {
+    const session = await createFeaturedCheckout(req.session.user, job);
+    res.redirect(session.url);
+  } catch (err) {
+    console.error('[stripe] featured checkout failed:', err.message);
+    res.redirect('/employer/dashboard?error=' + encodeURIComponent('Could not start checkout. Please try again.'));
+  }
+});
+
+router.get('/jobs/feature/success', async (req, res) => {
+  const stripe = getStripe();
+  const sessionId = req.query.session_id;
+  if (!stripe || !sessionId) return res.redirect('/employer/dashboard');
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    fulfillCheckoutSession(session);
+  } catch (err) {
+    console.error('[stripe] could not verify session:', err.message);
+  }
+
+  res.redirect('/employer/dashboard?featured=1');
+});
+
+// Billing — free post quota and payment history
+router.get('/billing', (req, res) => {
+  const payments = db.prepare('SELECT * FROM payments WHERE employer_id = ? ORDER BY created_at DESC').all(req.session.user.id);
+  res.render('employer/billing', {
+    title: 'Billing',
+    payments,
+    pricing: getPricing(),
+    freeRemaining: freePostsRemaining(req.session.user.id),
+  });
 });
 
 // Reports & suggestions — threaded conversation with admin

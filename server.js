@@ -23,11 +23,16 @@ const seekerRoutes = require('./routes/seeker');
 const adminRoutes = require('./routes/admin');
 const blogRoutes = require('./routes/blog');
 const pagesRoutes = require('./routes/pages');
+const stripeWebhookRoutes = require('./routes/stripeWebhook');
 
 const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+// Stripe webhook needs the raw, unparsed body to verify its signature, so it
+// must be mounted before the general urlencoded body parser below.
+app.use('/stripe', stripeWebhookRoutes);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));

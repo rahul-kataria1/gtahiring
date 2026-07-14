@@ -45,7 +45,7 @@ router.get('/', (req, res) => {
     sql += ' AND j.location LIKE ?';
     params.push(`%${location}%`);
   }
-  sql += ' ORDER BY j.created_at DESC';
+  sql += " ORDER BY (j.featured = 1 AND (j.featured_until IS NULL OR j.featured_until > datetime('now'))) DESC, j.created_at DESC";
 
   const jobs = db.prepare(sql).all(...params);
   res.render('jobs/index', { title: 'Find a job', jobs, q: q || '', location: location || '' });
