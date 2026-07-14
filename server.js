@@ -64,10 +64,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Make the AdSense on/off setting visible to every view
+// Make the AdSense on/off setting visible to every view. Always off inside
+// the iOS app (identified by the User-Agent Capacitor appends) — Google's
+// AdSense terms prohibit showing AdSense ads inside a native app shell;
+// mobile apps are required to use AdMob instead.
 app.use((req, res, next) => {
-  const row = db.prepare("SELECT value FROM settings WHERE key = 'ads_enabled'").get();
-  res.locals.adsEnabled = row ? row.value === '1' : true;
+  const isApp = (req.headers['user-agent'] || '').includes('GTAHiringApp');
+  if (isApp) {
+    res.locals.adsEnabled = false;
+  } else {
+    const row = db.prepare("SELECT value FROM settings WHERE key = 'ads_enabled'").get();
+    res.locals.adsEnabled = row ? row.value === '1' : true;
+  }
   next();
 });
 

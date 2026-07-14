@@ -8,6 +8,7 @@
     "cleartext": false
   },
   "ios": {
-    "contentInset": "automatic"
+    "contentInset": "automatic",
+    "appendUserAgent": "GTAHiringApp/1.0"
   }
 }
