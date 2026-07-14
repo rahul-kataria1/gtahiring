@@ -3,7 +3,7 @@
   "appName": "GTA Hiring",
   "webDir": "www",
   "server": {
-    "url": "https://jobs.gtahiring.com",
+    "url": "https://gtahiring.com",
     "iosScheme": "https",
     "cleartext": false
   },
