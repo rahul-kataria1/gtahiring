@@ -39,7 +39,7 @@ router.get('/register', (req, res) => {
 });
 
 router.post('/register', (req, res) => {
-  const { name, email, password, role, company_name } = req.body;
+  const { name, email, password, role, company_name, phone } = req.body;
 
   if (!name || !email || !password || !['seeker', 'employer'].includes(role)) {
     return res.render('register', {
@@ -63,9 +63,9 @@ router.post('/register', (req, res) => {
   const hash = bcrypt.hashSync(password, 10);
   const info = db
     .prepare(
-      'INSERT INTO users (name, email, password, role, company_name, email_verified) VALUES (?, ?, ?, ?, ?, 0)'
+      'INSERT INTO users (name, email, password, role, company_name, phone, email_verified) VALUES (?, ?, ?, ?, ?, ?, 0)'
     )
-    .run(name, email, hash, role, role === 'employer' ? company_name || name : null);
+    .run(name, email, hash, role, role === 'employer' ? company_name || name : null, phone ? phone.trim() : null);
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
   const token = issueVerificationToken(user.id);
