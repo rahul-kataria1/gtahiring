@@ -297,5 +297,6 @@ db.exec(`
     last_seen_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
+try { db.exec('ALTER TABLE active_sessions ADD COLUMN path TEXT'); } catch (e) {}
 
 module.exports = db;

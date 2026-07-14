@@ -24,8 +24,15 @@
 
   var jobStatusColors = { pending: C_WARN, approved: C_GOOD, rejected: C_BAD };
   var appStatusColors = { applied: C_SEEKER, reviewed: C_EMPLOYER, accepted: C_GOOD, rejected: C_BAD };
+  var roleColors = { seeker: C_SEEKER, employer: C_EMPLOYER, admin: C_GOOD, guest: '#6b7280' };
 
   function fmtDay(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }); }
+  function timeAgoShort(sqliteDate) {
+    var secs = Math.max(0, Math.round((Date.now() - new Date(sqliteDate.replace(' ', 'T') + 'Z')) / 1000));
+    if (secs < 60) return secs + 's ago';
+    if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+    return Math.floor(secs / 3600) + 'h ago';
+  }
 %>
 <style>
   .an-hero {
@@ -77,6 +84,16 @@
   .an-status-value { width: 70px; text-align: right; font-size: 0.82rem; color: var(--muted); flex-shrink: 0; }
 
   .an-table-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 0.88rem; }
+
+  .an-online-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+  .an-online-row:last-child { border-bottom: none; }
+  .an-online-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .an-online-who { flex: 1; min-width: 0; }
+  .an-online-name { font-size: 0.87rem; font-weight: 600; color: var(--text); }
+  .an-online-role { font-size: 0.74rem; color: var(--muted); text-transform: capitalize; }
+  .an-online-path { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.82rem; color: var(--violet-dark); background: var(--violet-bg); padding: 3px 9px; border-radius: 6px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+  .an-online-time { width: 64px; text-align: right; font-size: 0.76rem; color: var(--muted); flex-shrink: 0; }
+  .an-online-list { max-height: 420px; overflow-y: auto; }
 </style>
 
 <h1>Analytics</h1>
@@ -108,6 +125,31 @@
   <div class="an-kpi"><div class="an-kpi-value"><%= activity.dau %></div><div class="an-kpi-label">Active today</div></div>
   <div class="an-kpi"><div class="an-kpi-value"><%= activity.wau %></div><div class="an-kpi-label">Active this week</div></div>
   <div class="an-kpi"><div class="an-kpi-value"><%= activity.mau %></div><div class="an-kpi-label">Active this month</div></div>
+</div>
+
+<div class="an-card">
+  <div class="an-card-head">
+    <h2>Who's online</h2>
+    <span style="font-size:0.78rem;color:var(--muted);">Updates every 10s &middot; current page per visitor</span>
+  </div>
+  <div class="an-card-body" style="padding:8px 22px;">
+    <div class="an-online-list" id="anOnlineList">
+      <% if (activeSessions.length === 0) { %>
+        <div class="an-table-empty">No one's active right now.</div>
+      <% } %>
+      <% activeSessions.forEach(s => { var role = s.role || 'guest'; %>
+        <div class="an-online-row">
+          <span class="an-online-dot" style="background:<%= roleColors[role] %>;"></span>
+          <div class="an-online-who">
+            <div class="an-online-name"><%= s.name || 'Guest' %></div>
+            <div class="an-online-role"><%= role %></div>
+          </div>
+          <span class="an-online-path"><%= s.path || '—' %></span>
+          <span class="an-online-time"><%= timeAgoShort(s.last_seen_at) %></span>
+        </div>
+      <% }) %>
+    </div>
+  </div>
 </div>
 
 <div class="an-card">
@@ -207,12 +249,42 @@
 
 <script>
   (function () {
+    var roleColors = { seeker: '<%= C_SEEKER %>', employer: '<%= C_EMPLOYER %>', admin: '<%= C_GOOD %>', guest: '#6b7280' };
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function timeAgo(sqliteDate) {
+      var secs = Math.max(0, Math.round((Date.now() - new Date(sqliteDate.replace(' ', 'T') + 'Z')) / 1000));
+      if (secs < 60) return secs + 's ago';
+      if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+      return Math.floor(secs / 3600) + 'h ago';
+    }
+
     function refresh() {
       fetch('/admin/analytics/active-now').then(r => r.json()).then(data => {
         document.getElementById('anActiveNow').textContent = data.total;
+
         var wrap = document.getElementById('anActiveBreakdown');
         wrap.innerHTML = data.byRole.map(function (r) {
-          return '<div class="an-hero-breakdown-item"><div class="v">' + r.c + '</div><div class="l">' + r.role + '</div></div>';
+          return '<div class="an-hero-breakdown-item"><div class="v">' + r.c + '</div><div class="l">' + esc(r.role) + '</div></div>';
+        }).join('');
+
+        var list = document.getElementById('anOnlineList');
+        if (!data.sessions || data.sessions.length === 0) {
+          list.innerHTML = '<div class="an-table-empty">No one\'s active right now.</div>';
+          return;
+        }
+        list.innerHTML = data.sessions.map(function (s) {
+          var role = s.role || 'guest';
+          return '<div class="an-online-row">' +
+            '<span class="an-online-dot" style="background:' + (roleColors[role] || roleColors.guest) + ';"></span>' +
+            '<div class="an-online-who"><div class="an-online-name">' + esc(s.name || 'Guest') + '</div><div class="an-online-role">' + esc(role) + '</div></div>' +
+            '<span class="an-online-path">' + esc(s.path || '—') + '</span>' +
+            '<span class="an-online-time">' + timeAgo(s.last_seen_at) + '</span>' +
+            '</div>';
         }).join('');
       }).catch(function () {});
     }

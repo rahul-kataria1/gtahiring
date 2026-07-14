@@ -96,20 +96,24 @@ app.use((req, res, next) => {
 // otherwise every request would mint a fresh, throwaway sessionID and no
 // visitor could ever be counted as a single "active" person. Touching
 // req.session here is what gives guests a stable ID across their visit.
+// Endpoints polled in the background shouldn't overwrite "which page are they
+// on" with the polling URL itself.
+const PRESENCE_EXCLUDED_PATHS = new Set(['/admin/analytics/active-now']);
+
 const presenceLastWritten = new Map();
 app.use((req, res, next) => {
   const sid = req.sessionID;
-  if (sid) {
+  if (sid && !PRESENCE_EXCLUDED_PATHS.has(req.path)) {
     const now = Date.now();
     if (now - (presenceLastWritten.get(sid) || 0) > 15000) {
       presenceLastWritten.set(sid, now);
       req.session.lastSeen = now;
       const user = req.session.user;
       db.prepare(`
-        INSERT INTO active_sessions (session_id, user_id, role, last_seen_at)
-        VALUES (?, ?, ?, datetime('now'))
-        ON CONFLICT(session_id) DO UPDATE SET user_id = excluded.user_id, role = excluded.role, last_seen_at = excluded.last_seen_at
-      `).run(sid, user ? user.id : null, user ? user.role : null);
+        INSERT INTO active_sessions (session_id, user_id, role, path, last_seen_at)
+        VALUES (?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(session_id) DO UPDATE SET user_id = excluded.user_id, role = excluded.role, path = excluded.path, last_seen_at = excluded.last_seen_at
+      `).run(sid, user ? user.id : null, user ? user.role : null, req.path);
       if (user) {
         db.prepare("UPDATE users SET last_seen_at = datetime('now') WHERE id = ?").run(user.id);
       }

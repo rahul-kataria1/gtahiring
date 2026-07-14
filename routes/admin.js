@@ -561,11 +561,18 @@ function activeNowSnapshot() {
   const byRole = db.prepare(`
     SELECT COALESCE(role, 'guest') as role, COUNT(*) as c FROM active_sessions GROUP BY role
   `).all();
-  return { total, byRole };
+  const sessions = db.prepare(`
+    SELECT a.role, a.path, a.last_seen_at, u.name, u.email
+    FROM active_sessions a
+    LEFT JOIN users u ON u.id = a.user_id
+    ORDER BY a.last_seen_at DESC
+    LIMIT 50
+  `).all();
+  return { total, byRole, sessions };
 }
 
 router.get('/analytics', (req, res) => {
-  const { total: activeNow, byRole: activeByRole } = activeNowSnapshot();
+  const { total: activeNow, byRole: activeByRole, sessions: activeSessions } = activeNowSnapshot();
 
   const totals = {
     seekers: db.prepare("SELECT COUNT(*) as c FROM users WHERE role = 'seeker'").get().c,
@@ -626,7 +633,7 @@ router.get('/analytics', (req, res) => {
 
   res.render('admin/analytics', {
     title: 'Analytics',
-    activeNow, activeByRole,
+    activeNow, activeByRole, activeSessions,
     totals, activity,
     signupsByDay, jobsByDay, applicationsByDay,
     jobStatusBreakdown, appStatusBreakdown,
