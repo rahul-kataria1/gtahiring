@@ -766,4 +766,14 @@ router.post('/pages/:slug/edit', (req, res) => {
   res.render('admin/pages/edit', { title: `Edit — ${page.title}`, page, meta: JSON.parse(meta), error: null, success: 'Page saved successfully.' });
 });
 
+// One-time maintenance route: seeds ~100 original GTA job listings directly
+// against the live database (the persistent Railway volume isn't touched by
+// git-committed db/jobboard.db on deploy). Visit once while logged in as
+// admin, then this route should be removed.
+router.get('/maintenance/seed-jobs', (req, res) => {
+  const { seedJobs } = require('../db/seed-jobs');
+  const result = seedJobs(db);
+  res.send(`Seeded ${result.created} job postings across ${result.employers} employers. <a href="/">Go to homepage</a>`);
+});
+
 module.exports = router;

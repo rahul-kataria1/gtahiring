@@ -4,10 +4,11 @@
 // own employer accounts would be both a ToS/legal problem and misleading
 // to job seekers (their "application" wouldn't reach the real employer).
 //
-// Run once with: node db/seed-jobs.js
-require('dotenv').config();
+// Run standalone against the local DB with: node db/seed-jobs.js
+// Also exported as seedJobs(db) so it can be run against the live
+// production database, which lives on a Railway persistent volume that
+// git-committed db/jobboard.db does NOT touch on deploy.
 const bcrypt = require('bcryptjs');
-const db = require('./db');
 
 const LOCATIONS = [
   'Toronto', 'Mississauga', 'Brampton', 'Vaughan', 'Markham', 'Richmond Hill',
@@ -132,7 +133,7 @@ function randomRecentTimestamp() {
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-function ensureEmployer(e) {
+function ensureEmployer(db, e) {
   let user = db.prepare('SELECT id FROM users WHERE email = ?').get(e.email);
   if (user) return user.id;
   const hash = bcrypt.hashSync('SeedEmployer#' + Math.random().toString(36).slice(2, 10), 10);
@@ -143,9 +144,9 @@ function ensureEmployer(e) {
   return info.lastInsertRowid;
 }
 
-function main() {
+function seedJobs(db) {
   const employerIds = {};
-  EMPLOYERS.forEach(e => { employerIds[e.company] = { id: ensureEmployer(e), industry: e.industry, company: e.company }; });
+  EMPLOYERS.forEach(e => { employerIds[e.company] = { id: ensureEmployer(db, e), industry: e.industry, company: e.company }; });
 
   const byIndustry = {};
   Object.values(employerIds).forEach(e => {
@@ -182,7 +183,14 @@ function main() {
     created++;
   }
 
-  console.log(`Seeded ${created} job postings across ${EMPLOYERS.length} employers.`);
+  return { created, employers: EMPLOYERS.length };
 }
 
-main();
+module.exports = { seedJobs };
+
+if (require.main === module) {
+  require('dotenv').config();
+  const db = require('./db');
+  const result = seedJobs(db);
+  console.log(`Seeded ${result.created} job postings across ${result.employers} employers.`);
+}
