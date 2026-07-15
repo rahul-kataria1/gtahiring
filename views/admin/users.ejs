@@ -49,7 +49,7 @@
   <% } else { %>
     <% if (q) { %>
       <p class="subtitle" style="margin-bottom:16px;">
-        <%= users.length %> result<%= users.length === 1 ? '' : 's' %> for "<strong><%= q %></strong>"
+        <%= total %> result<%= total === 1 ? '' : 's' %> for "<strong><%= q %></strong>"
       </p>
     <% } %>
     <%
@@ -89,6 +89,7 @@
                   <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/toggle-review">
                     <input type="hidden" name="_q" value="<%= q %>">
                     <input type="hidden" name="_role" value="<%= role %>">
+                    <input type="hidden" name="_page" value="<%= currentPage %>">
                     <button type="submit" class="review-toggle-btn <%= u.require_review !== 0 ? 'review-on' : 'review-off' %>"
                       title="<%= u.require_review !== 0 ? 'Posts require admin approval — click to auto-publish' : 'Posts go live immediately — click to require approval' %>">
                       <span class="review-dot"></span>
@@ -105,12 +106,14 @@
                 <input type="hidden" name="status" value="<%= u.status === 'active' ? 'blocked' : 'active' %>">
                 <input type="hidden" name="_q" value="<%= q %>">
                 <input type="hidden" name="_role" value="<%= role %>">
+                <input type="hidden" name="_page" value="<%= currentPage %>">
                 <button class="btn small outline" type="submit"><%= u.status === 'active' ? 'Block' : 'Unblock' %></button>
               </form>
               <form class="inline-form" method="POST" action="/admin/users/<%= u.id %>/delete"
                     onsubmit="return confirm('Delete this user permanently?');">
                 <input type="hidden" name="_q" value="<%= q %>">
                 <input type="hidden" name="_role" value="<%= role %>">
+                <input type="hidden" name="_page" value="<%= currentPage %>">
                 <button class="btn small danger" type="submit">Delete</button>
               </form>
             </td>
@@ -118,5 +121,53 @@
         <% }) %>
       </tbody>
     </table>
+
+    <% if (totalPages > 1) { %>
+      <%
+        var pageBase = '/admin/users?' + (role !== 'all' ? 'role=' + role + '&' : '') + (q ? 'q=' + encodeURIComponent(q) + '&' : '') + 'page=';
+        var windowStart = Math.max(1, currentPage - 2);
+        var windowEnd   = Math.min(totalPages, currentPage + 2);
+      %>
+      <nav class="pagination" aria-label="User pages">
+        <% if (currentPage > 1) { %>
+          <a class="pagination-btn" href="<%= pageBase %><%= currentPage - 1 %>" aria-label="Previous page">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </a>
+        <% } else { %>
+          <span class="pagination-btn disabled" aria-disabled="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </span>
+        <% } %>
+
+        <% if (windowStart > 1) { %>
+          <a class="pagination-btn" href="<%= pageBase %>1">1</a>
+          <% if (windowStart > 2) { %><span class="pagination-ellipsis">&hellip;</span><% } %>
+        <% } %>
+
+        <% for (var p = windowStart; p <= windowEnd; p++) { %>
+          <% if (p === currentPage) { %>
+            <span class="pagination-btn active" aria-current="page"><%= p %></span>
+          <% } else { %>
+            <a class="pagination-btn" href="<%= pageBase %><%= p %>"><%= p %></a>
+          <% } %>
+        <% } %>
+
+        <% if (windowEnd < totalPages) { %>
+          <% if (windowEnd < totalPages - 1) { %><span class="pagination-ellipsis">&hellip;</span><% } %>
+          <a class="pagination-btn" href="<%= pageBase %><%= totalPages %>"><%= totalPages %></a>
+        <% } %>
+
+        <% if (currentPage < totalPages) { %>
+          <a class="pagination-btn" href="<%= pageBase %><%= currentPage + 1 %>" aria-label="Next page">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        <% } else { %>
+          <span class="pagination-btn disabled" aria-disabled="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        <% } %>
+      </nav>
+      <p class="pagination-count">Page <%= currentPage %> of <%= totalPages %> &mdash; <%= total %> user<%= total !== 1 ? 's' : '' %></p>
+    <% } %>
   <% } %>
 <%- include('../partials/admin-footer') %>

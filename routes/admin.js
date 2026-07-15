@@ -190,22 +190,30 @@ router.post('/jobs/:id/delete', (req, res) => {
 router.get('/users', (req, res) => {
   const role = req.query.role;
   const q = (req.query.q || '').trim();
+  const perPage = 20;
+  const page = Math.max(1, parseInt(req.query.page || '1', 10));
 
-  let sql = "SELECT * FROM users WHERE role != 'admin'";
+  let base = "FROM users WHERE role != 'admin'";
   const params = [];
 
   if (['seeker', 'employer'].includes(role)) {
-    sql += ' AND role = ?';
+    base += ' AND role = ?';
     params.push(role);
   }
   if (q) {
-    sql += ' AND (name LIKE ? OR email LIKE ?)';
+    base += ' AND (name LIKE ? OR email LIKE ?)';
     params.push(`%${q}%`, `%${q}%`);
   }
 
-  sql += ' ORDER BY created_at DESC';
-  const users = db.prepare(sql).all(...params);
-  res.render('admin/users', { title: 'Manage users', users, role: role || 'all', q });
+  const total = db.prepare(`SELECT COUNT(*) as c ${base}`).get(...params).c;
+  const totalPages = Math.ceil(total / perPage) || 1;
+  const currentPage = Math.min(page, totalPages);
+  const offset = (currentPage - 1) * perPage;
+
+  const users = db.prepare(`SELECT * ${base} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
+    .all(...params, perPage, offset);
+
+  res.render('admin/users', { title: 'Manage users', users, role: role || 'all', q, currentPage, totalPages, total });
 });
 
 function buildUsersRedirect(body) {
@@ -213,6 +221,7 @@ function buildUsersRedirect(body) {
   const parts = [];
   if (body._role && body._role !== 'all') parts.push(`role=${encodeURIComponent(body._role)}`);
   if (body._q) parts.push(`q=${encodeURIComponent(body._q)}`);
+  if (body._page && body._page !== '1') parts.push(`page=${encodeURIComponent(body._page)}`);
   return '/admin/users' + (parts.length ? '?' + parts.join('&') : '');
 }
 
