@@ -10,5 +10,16 @@
   "ios": {
     "contentInset": "automatic",
     "appendUserAgent": "GTAHiringApp/1.0"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2200,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 350,
+      "backgroundColor": "#0057D8",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
   }
 }

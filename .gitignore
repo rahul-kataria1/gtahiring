@@ -6,6 +6,7 @@ db/jobboard.db-*
 ios-app/node_modules/
 ios-app/ios/App/Pods/
 ios-app/ios/App/build/
+ios-app/ios/App/CapApp-SPM/build/
 ios-app/ios/DerivedData/
 *.xcuserstate
 xcuserdata/
